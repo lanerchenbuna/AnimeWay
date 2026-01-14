@@ -1,0 +1,6 @@
+streamlit>=1.30.0
+requests>=2.31.0
+pandas>=2.0.0
+pydeck>=0.8.0
+dashscope>=1.14.0
+geopy>=2.4.0
