@@ -10,8 +10,8 @@ def calculate_distance_matrix(points):
     for i in range(n):
         for j in range(n):
             if i == j: continue
-            coords_i = (points[i]['geo'][0], points[i]['geo'][1])
-            coords_j = (points[j]['geo'][0], points[j]['geo'][1])
+            coords_i = (points[i]['lat'], points[i]['lon'])
+            coords_j = (points[j]['lat'], points[j]['lon'])
             try:
                 # geodesic expects (lat, lon)
                 matrix[i][j] = geodesic(coords_i, coords_j).km
