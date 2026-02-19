@@ -300792,5 +300792,70 @@
     "tags": [
       "扶桑花之舞"
     ]
+  },
+  {
+    "anime_id": 320239,
+    "name": "阜新站",
+    "geo": [
+      41.9851,
+      121.6327
+    ],
+    "image": "https://image.anitabi.cn/points/320239/nozyzj4uc_1725000097215_cut.jpg?plan=h160",
+    "city": "",
+    "tags": [
+      "血与心"
+    ]
+  },
+  {
+    "anime_id": 320239,
+    "name": "人民空军东北老航校旧址",
+    "geo": [
+      44.5418,
+      129.5749
+    ],
+    "image": "https://image.anitabi.cn/points/320239/np0o4sti4_1725000102779_cut.jpg?plan=h160",
+    "city": "",
+    "tags": [
+      "血与心"
+    ]
+  },
+  {
+    "anime_id": 320239,
+    "name": "辽宁省北镇市六台子村",
+    "geo": [
+      41.523,
+      121.9579
+    ],
+    "image": "https://image.anitabi.cn/points/320239/npj2vb35n_1726916300443_c16v9.jpg?plan=h160",
+    "city": "",
+    "tags": [
+      "血与心"
+    ]
+  },
+  {
+    "anime_id": 236074,
+    "name": "新宿アルタ",
+    "geo": [
+      35.6923,
+      139.7012
+    ],
+    "image": "https://image.anitabi.cn/points/236074/1phho2a_1750728175555.jpg?plan=h160",
+    "city": "",
+    "tags": [
+      "闪亮美妙☆频道"
+    ]
+  },
+  {
+    "anime_id": 208773,
+    "name": "香港科技大学",
+    "geo": [
+      22.3375,
+      114.263
+    ],
+    "image": "https://image.anitabi.cn/user/0/bangumi/208773/points/1z1s6r0-1751306485590.jpg?plan=h160",
+    "city": "",
+    "tags": [
+      "机甲大师"
+    ]
   }
 ]
