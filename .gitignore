@@ -15,3 +15,5 @@ venv/
 
 # Streamlit
 .streamlit/
+secrets.toml
+
