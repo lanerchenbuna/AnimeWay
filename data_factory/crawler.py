@@ -9,6 +9,7 @@ BANGUMI_FILE = "knowledge_base/raw/bangumi_knowledge.json"
 OUTPUT_FILE = "knowledge_base/raw/anitabi_crawl.json"
 # 🛠️ Fix: Use /points/detail endpoint for full data (lite is capped at 10)
 ANITABI_BASE_URL = "https://api.anitabi.cn/bangumi/{}/points/detail"
+ANITABI_LITE_URL = "https://api.anitabi.cn/bangumi/{}/lite"
 DELAY_SECONDS = 0.5  # Be polite to the API
 
 def load_bangumi_ids(filepath: str) -> List[Dict]:
@@ -22,6 +23,20 @@ def load_bangumi_ids(filepath: str) -> List[Dict]:
         
     print(f"✅ Loaded {len(data)} subjects from {filepath}")
     return data
+
+def fetch_anitabi_lite_city(subject_id: str) -> str:
+    """Fetches the main city for the anime from the lite endpoint."""
+    url = ANITABI_LITE_URL.format(subject_id)
+    headers = {'User-Agent': 'AnimePilgrimage/1.0'}
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            return data.get("city") or ""
+        return ""
+    except Exception:
+        return ""
 
 def fetch_anitabi_points(subject_id: str) -> List[Dict]:
     """Fetches pilgrimage points for a given subject ID."""
@@ -76,16 +91,16 @@ def main():
         # Check if we got valid data (List of spots)
         if isinstance(data, list) and data:
             points = data
-            city = "" 
+            anime_city = fetch_anitabi_lite_city(sid) 
             
-            print(f" ✅ Found {len(points)} spots (Full).")
+            print(f" ✅ Found {len(points)} spots (Full). City: {anime_city}")
             for p in points:
                 crawled_points.append({
                     "anime_id": int(sid),
                     "name": p.get("name") or p.get("cn"), 
                     "geo": p.get("geo"),
                     "image": p.get("image"),
-                    "city": p.get("city") or "", 
+                    "city": p.get("city") or anime_city, 
                     "tags": [title]
                 })
         else:
