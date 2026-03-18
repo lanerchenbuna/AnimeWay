@@ -31,6 +31,32 @@
 
 #### 2. 🔗 运行时数据融合 (Runtime Data Joining)
 *   **Dynamic ETL**: 摒弃了传统的离线宽表模式。系统在启动时，会实时读取 `Bangumi` 的元数据 (7,900+ 条) 和 `Anitabi` 的地理数据 (8,000+ 点)，在内存中进行**实时连接 (Join)**。
+
+```mermaid
+graph TD
+    subgraph Extract 提取层
+        B_API[Bangumi API] --> |Metadata| B_JSON(bangumi_knowledge.json)
+        A_API[Anitabi API] --> |Geospatial Data| CRAWLER[crawler.py]
+        CRAWLER -.-> |Checkpointing| CRAWLER
+        CRAWLER --> |Spots Data| A_JSON(anitabi_crawl.json)
+    end
+
+    subgraph Transform & Load 融合层
+        B_JSON --> AGENT[AnimeRagAgent]
+        A_JSON --> AGENT
+        AGENT --> |Clean & Align| JOIN[In-Memory Join / Pandas]
+        JOIN --> |Construct| KG((Unified Knowledge Graph))
+        JOIN --> |Vectorize| VEC[(Vector Store)]
+    end
+
+    subgraph Serving 应用层
+        KG --> RAG[Hybrid Retriever]
+        VEC --> RAG
+        RAG --> LLM[DashScope LLM]
+        LLM --> UI[Streamlit UI]
+    end
+```
+
 *   **Heterogeneous Data Fusion**: 实现了非结构化文本 (简介/Tag) 与结构化数据 (经纬度/评分) 的多模态对齐，确保数据的实时性和一致性。
 
 #### 3. 🕷️ 全量数据引擎 (Full Data Engine)
