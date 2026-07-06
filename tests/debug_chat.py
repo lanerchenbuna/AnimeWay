@@ -18,15 +18,22 @@ def test_chat():
     query = "少女歌剧"
     print(f"🗣️ Query: {query}")
     
-    # 1. Test Retrieval Speed/Crash
-    print("... Testing Retrieval Logic (GUIDE Intent Path) ...")
+    # 1. Test unified Agent entrypoint
+    print("... Testing Agent.run() path ...")
     import time
     start = time.time()
-    candidates = agent.retriever.get_anime_candidates(query)
+    agent.intent_service.classify = lambda _query, history=None: {
+        "intent": "SEARCH",
+        "keywords": _query,
+        "anime_name": None,
+        "reasoning": "debug override",
+    }
+    result = agent.run(query, api_key=os.getenv("DASHSCOPE_API_KEY", ""))
     end = time.time()
     
-    print(f"✅ Retrieval finished in {end - start:.4f}s")
-    print(f"Found {len(candidates)} candidates.")
+    candidates = result.get("candidates", [])
+    print(f"✅ Agent.run finished in {end - start:.4f}s")
+    print(f"Mode: {result.get('mode')} | Found {len(candidates)} candidates.")
     if candidates:
         print(f"Top match: {candidates[0]['cn']}")
     

@@ -50,9 +50,16 @@ def run_evaluation():
         
         start_time = time.time()
         try:
-            # We assume agent.generate_response returns a string
             if DASHSCOPE_API_KEY:
-                response = agent.generate_response(query, DASHSCOPE_API_KEY)
+                result = agent.run(query, api_key=DASHSCOPE_API_KEY)
+                response = result.get("response") or json.dumps(
+                    {
+                        "mode": result.get("mode"),
+                        "candidates": result.get("candidates", [])[:3],
+                        "spots": result.get("spots", [])[:3],
+                    },
+                    ensure_ascii=False,
+                )
             else:
                 response = "Skipped (No API Key)"
                 

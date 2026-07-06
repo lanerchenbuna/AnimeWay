@@ -1,10 +1,10 @@
 # 如何导入自定义数据
 
-请将您准备好的 JSON 文件放置于此目录，并命名为 `anitabi_crawl.json` (或者修改 `etl_pipeline.py` 中的路径)。
+请将您准备好的 JSON 文件放置于此目录，并命名为 `anitabi_crawl.json` (或者修改 `data_factory/build_kb.py` 中的路径)。
 
 ## 推荐数据格式 (Expected Schema)
 
-ETL 管道预期的数据格式如下：
+知识库构建管道预期的数据格式如下：
 
 ```json
 [
@@ -23,8 +23,8 @@ ETL 管道预期的数据格式如下：
 ## 导入步骤
 
 1. 放入 JSON 文件：`knowledge_base/raw/anitabi_crawl.json`
-2. 运行 ETL 管道：
+2. 运行知识库构建管道：
    ```bash
-   python -m data_factory.etl_pipeline
+   python data_factory/build_kb.py
    ```
-3.系统会自动清洗、校验并生成最终的 `knowledge_base.json`。
+3. 系统会自动清洗、校验并生成最终的 `knowledge_base/index.json`。
