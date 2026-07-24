@@ -3,6 +3,12 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.coverage
+.coverage.*
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
 
 # Environment
 .env
@@ -15,3 +21,12 @@ venv/
 
 # Streamlit
 .streamlit/
+
+# Runtime data
+.cache/
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+!knowledge_base/animeway.sqlite3
+evaluation/feedback_log.jsonl
+evaluation/bad_cases.jsonl

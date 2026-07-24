@@ -1,0 +1,38 @@
+name: quality
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install locked dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Type check route and evaluation boundaries
+        run: uv run mypy
+
+      - name: Unit and end-to-end tests
+        run: uv run pytest --cov --cov-report=term-missing
+
+      - name: Chinese retrieval golden set
+        run: uv run python -m evaluation.run_eval
+
+      - name: Retrieval performance thresholds
+        run: uv run python -m evaluation.benchmark_retrieval

@@ -1,4 +1,5 @@
 from core.agent import AnimeRagAgent
+from core.retrieval import HybridRetriever
 import pytest
 
 
@@ -40,3 +41,54 @@ def test_starlight_search_prefers_tv_series_with_spots(retriever):
     assert candidates
     assert candidates[0]["id"] == 214265
     assert "96 圣地" in candidates[0]["summary"]
+
+
+def test_irrelevant_query_does_not_receive_popularity_boost(retriever):
+    query = "量子香蕉飞船"
+
+    assert retriever.search_anime(query, k=5) == []
+    assert retriever.search_spots(query, k=5) == []
+
+
+def test_dynamic_city_lexicon_routes_yokohama_query_to_yokohama(retriever):
+    spots = retriever.search_spots("横滨有什么动画圣地", k=10)
+
+    assert spots
+    assert all("横滨" in (spot.get("city") or "") for spot in spots)
+
+
+def test_title_typo_can_still_match_anime(retriever):
+    candidates = retriever.search_anime("少钕歌剧", k=3)
+
+    assert candidates
+    assert "少女" in candidates[0]["cn"]
+
+
+def test_legacy_retrieval_cache_can_be_reloaded(tmp_path):
+    knowledge_base = [
+        {
+            "anime_id": 1,
+            "meta": {
+                "titles": {"cn": "缓存测试作品", "jp": ""},
+                "tags": [],
+                "score": 8,
+            },
+            "spots": [
+                {
+                    "id": "spot-1",
+                    "name": "缓存测试地点",
+                    "city": "测试市",
+                    "lat": 35,
+                    "lon": 139,
+                    "tags": [],
+                }
+            ],
+        }
+    ]
+
+    first = HybridRetriever(knowledge_base, cache_dir=str(tmp_path))
+    second = HybridRetriever(knowledge_base, cache_dir=str(tmp_path))
+
+    assert first.search_anime("缓存测试作品")
+    assert second.search_anime("缓存测试作品")
+    assert second.search_spots("缓存测试地点")

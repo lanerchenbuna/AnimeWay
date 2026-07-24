@@ -31,7 +31,7 @@ def extract_json_list(text: str) -> List[str] | None:
 class GuideService:
     FALLBACK_RECOMMENDATIONS = ["你的名字。", "孤独摇滚！", "轻音少女", "摇曳露营△", "冰菓"]
 
-    def __init__(self, llm_call: Callable[[str, List[Dict] | None], str]):
+    def __init__(self, llm_call: Callable[[str, List[Dict] | None, str], str]):
         self.llm_call = llm_call
 
     @staticmethod
@@ -64,15 +64,21 @@ class GuideService:
         except (TypeError, ValueError):
             return "Context Serialization Error"
 
-    def generate_response(self, user_query: str, context_results: List[Dict], history: List[Dict] | None = None) -> str:
+    def generate_response(
+        self,
+        user_query: str,
+        context_results: List[Dict],
+        history: List[Dict] | None = None,
+        api_key: str = "",
+    ) -> str:
         final_prompt = RAG_RESPONSE_TEMPLATE.format(
             system_persona=SYSTEM_PERSONA,
             context_str=self.summarize_context(context_results),
             user_query=user_query,
         )
-        return self.llm_call(final_prompt, history)
+        return self.llm_call(final_prompt, history, api_key)
 
-    def recommend_names(self, query: str, count: int = 10) -> List[str]:
+    def recommend_names(self, query: str, count: int = 10, api_key: str = "") -> List[str]:
         prompt = (
             f"用户想要关于“{query}”的{count}部圣地巡礼动画推荐。\n"
             "要求：\n"
@@ -82,7 +88,7 @@ class GuideService:
             "4. 不要包含任何Markdown标记或解释。\n\n"
             "示例格式: [\"动画A\", \"动画B\"]"
         )
-        raw = self.llm_call(prompt, None)
+        raw = self.llm_call(prompt, None, api_key)
         names = extract_json_list(raw)
         if names:
             return names[:count]

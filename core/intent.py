@@ -66,8 +66,13 @@ def heuristic_intent(query: str) -> Dict[str, Any]:
         intent = "GUIDE"
     elif re.search(r"圣地|巡礼|取景|在哪|哪里|地点|位置|京都|东京|東京|咖啡|cafe|喫茶", q, re.IGNORECASE):
         intent = "SEARCH"
-    else:
+    elif re.search(r"你好|您好|你是谁|闲聊|聊聊天|谢谢|再见|帮助", q):
         intent = "CHAT"
+    else:
+        # The primary no-key surface is a relevance-gated local search box.
+        # Unknown terms should therefore be allowed to return a trustworthy
+        # empty result instead of being forced through an unavailable LLM.
+        intent = "SEARCH"
     return {
         "intent": intent,
         "keywords": q,
@@ -77,7 +82,7 @@ def heuristic_intent(query: str) -> Dict[str, Any]:
 
 
 class IntentService:
-    def __init__(self, llm_call: Callable[[str, List[Dict] | None], str]):
+    def __init__(self, llm_call: Callable[[str, List[Dict] | None, str], str]):
         self.llm_call = llm_call
 
     @staticmethod
@@ -91,11 +96,13 @@ class IntentService:
             lines.append(f"{role}: {content}")
         return "\n".join(lines)
 
-    def classify(self, query: str, history: List[Dict] | None = None) -> Dict[str, Any]:
+    def classify(self, query: str, history: List[Dict] | None = None, api_key: str = "") -> Dict[str, Any]:
+        if not api_key:
+            return heuristic_intent(query)
         history_context = self.format_history(history)
         prompt_query = f"{history_context}\nCurrent Query: {query}" if history_context else query
         prompt = INTENT_PROMPT_TEMPLATE.replace("{user_query}", prompt_query)
-        raw = self.llm_call(prompt, None)
+        raw = self.llm_call(prompt, None, api_key)
         parsed = extract_json_object(raw)
         if parsed is None:
             return heuristic_intent(query)

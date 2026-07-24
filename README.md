@@ -1,205 +1,233 @@
-# AnimeWay | 二次元圣地巡礼智能助手
+<div align="center">
 
-AnimeWay 是一个面向动画圣地巡礼的 Streamlit 应用。它把 Bangumi 作品元数据、Anitabi 地理点位、DashScope/Qwen Agent、高德地图路线能力组合在一起，帮助用户从自然语言查询一路走到地点收藏、路线预览和 AI 路书生成。
+<p><code>ANIME PILGRIMAGE NAVIGATOR · 聖地巡礼</code></p>
 
-当前版本重点优化了数据可靠性、检索质量、Agent 边界、路线规划和 UI 结构，让项目更适合持续迭代和 vibe coding。
+# AnimeWay · 二次元圣地巡礼助手
 
-## 核心能力
+### 穿过次元壁，抵达故事发生的地方。
 
-### 1. 统一 Agent 入口
+**从一句喜欢的作品，到一条真实可走的巡礼路线。**<br>
+Turn anime memories into a journey you can actually take.<br>
+物語の景色を、ほんとうの旅へ。
 
-`AnimeRagAgent.run()` 是 UI、CLI 和测试共用的入口。Agent 内部被拆成独立服务：
+<br>
 
-- `core/intent.py`：意图分类、LLM JSON 解析、schema fallback。
-- `core/search.py`：作品搜索、点位搜索、地点/主题查询分流。
-- `core/guide.py`：RAG 回答和推荐列表生成。
-- `core/planner.py`：SEARCH / GUIDE / RECOMMEND / CHAT 编排。
+<img src="assets/images/animeway-hero.webp" width="100%" alt="AnimeWay 二次元圣地巡礼主视觉">
 
-这样 LLM 只负责理解和表达，确定性检索与状态流转由代码处理。
+<br><br>
 
-### 2. 可靠数据管线
+![Python 3.10–3.13](https://img.shields.io/badge/Python-3.10--3.13-68E1FD?style=flat-square&labelColor=111630)
+![Streamlit](https://img.shields.io/badge/Streamlit-App-FF70A6?style=flat-square&labelColor=111630)
+![Local search](https://img.shields.io/badge/Local_Search-No_AI_Key-69F0AE?style=flat-square&labelColor=111630)
+![Code License](https://img.shields.io/badge/Code_License-MIT-9B7BFF?style=flat-square&labelColor=111630)
 
-数据层从运行时临时 join 改为可复现的标准索引：
+</div>
 
-- `data_factory/crawler.py` 支持增量爬取、断点续传和状态文件。
-- `knowledge_base/raw/crawl_state.json` 记录成功、404、失败和重试次数。
-- 点位 ID 使用稳定 SHA1，不再依赖 Python `hash()`。
-- `data_factory/build_kb.py` 生成标准化 `knowledge_base/index.json`。
-- `data_factory/schema.py` 使用 Pydantic 校验数据结构。
+## 一句话，到一条巡礼路线
 
-当前索引统计：
+AnimeWay 是一款为动画旅行者准备的圣地巡礼工具。
 
-- 作品：7966
-- 有圣地数据的作品：906
-- 有效点位：23248
-- 缺城市字段点位：1164
-- 缺图片点位：2356
+输入作品、城市或想寻找的氛围，它会从本地知识库中找到真实匹配的取景地点；把喜欢的坐标装进「巡礼背包」，就能生成带有站点顺序、距离、耗时、地图与事实表的「冒险之书」。
 
-### 3. 本地 BM25 检索
+作品、城市和主题检索不依赖大模型。没有地图 Key 时，也可以生成明确标注为离线估算的路线预览。
 
-`core/retrieval.py` 提供两个明确入口：
+<p align="center">
+  <img src="docs/media/animeway-demo.gif" width="100%" alt="AnimeWay 从京都圣地检索、收藏点位到生成路线的真实交互演示">
+</p>
 
-- `search_anime(query)`：作品搜索。
-- `search_spots(query)`：点位、城市、主题、场景搜索。
+> 上方为真实界面录制：`京都有什么动画圣地` → 收藏 3 个坐标 → 生成离线路线 → 查看数据库事实。演示未配置任何服务 Key。
 
-支持的查询示例：
+## 你的巡礼，四步出发
 
-- `少女歌剧`：优先返回有 96 个圣地的 TV 版。
-- `孤独摇滚圣地`：返回下北泽相关点位。
-- `京都有什么动画圣地`：返回京都点位，避免误把“東京都”当成京都。
-- `咖啡店巡礼`：返回 cafe / 咖啡 / 喫茶相关点位。
+| 01 · 观测 | 02 · 筛选 | 03 · 收藏 | 04 · 启程 |
+|---|---|---|---|
+| 输入作品、城市或主题 | 只展示通过相关性门槛的结果 | 将地点装进巡礼背包 | 生成路线、地图与事实路书 |
+| `孤独摇滚圣地` | 不用热门作品强行兜底 | 最多 12 个坐标 | 在线失败时明确降级 |
 
-可选本地缓存目录：
+可以直接试：
 
-```bash
-export ANIMEWAY_RETRIEVAL_CACHE_DIR="knowledge_base/vector_cache"
+```text
+孤独摇滚圣地
+京都有什么动画圣地
+咖啡店巡礼
+推荐几部适合夏天巡礼的动画
 ```
 
-### 4. 路线规划与冒险之书
+## 产品一览
 
-`core/route_planner.py` 负责路线规划：
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/media/animeway-home.webp" alt="AnimeWay 次元航线首页">
+    </td>
+    <td width="50%">
+      <img src="docs/media/animeway-discover.webp" alt="AnimeWay 京都圣地点位检索">
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <strong>次元观测站</strong><br>
+      <sub>原创夜色车站主视觉、动态扫描线与三语界面</sub>
+    </td>
+    <td align="center">
+      <strong>圣地坐标卡</strong><br>
+      <sub>作品、城市、经纬度与真实点位图片一屏掌握</sub>
+    </td>
+  </tr>
+</table>
 
-- 没有 Amap Key 时也能生成离线预览路线。
-- 有 Amap Key 时优先获取真实公交路线，失败后 fallback 到步行、驾车、离线直线距离。
-- 地理编码和路线结果会缓存，减少 API 调用。
-- TSP 只按直线距离排序，跨城市时会给出提醒。
-- UI 会先展示结构化路线摘要，再调用 LLM 生成路书文案。
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/media/animeway-route.webp" alt="AnimeWay 冒险之书路线摘要">
+    </td>
+    <td width="50%">
+      <img src="docs/media/animeway-facts.webp" alt="AnimeWay 数据库事实与巡礼相册">
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <strong>冒险之书</strong><br>
+      <sub>站点、距离、耗时和在线/离线状态清晰可见</sub>
+    </td>
+    <td align="center">
+      <strong>事实与建议分离</strong><br>
+      <sub>结构化事实由程序生成，AI 只提供可选旅行建议</sub>
+    </td>
+  </tr>
+</table>
 
-### 5. 组件化 UI
+## 为什么是 AnimeWay？
 
-`app.py` 已降为装配层，实际界面拆到：
+### 不需要 Key，也能开始
 
-- `components/sidebar.py`：密钥输入和背包概览。
-- `components/discover.py`：发现页、Agent 对话、候选作品、点位列表。
-- `components/plan.py`：路线摘要、地图、相册、路书。
-- `components/state.py`：session state、反馈、背包操作。
-- `components/ui.py`：HTML 卡片和状态组件。
+本地 SQLite / FTS 索引负责作品、城市、地点与主题检索。没有 DashScope Key 时，搜索、收藏和离线路线预览仍然可用。
 
-HTML 卡片会对外部数据做转义，降低 `unsafe_allow_html=True` 风险。
+### 宁可没有，也不要乱猜
 
-## 使用方式
+搜索会先确认标题、地点、城市或主题发生真实匹配，再使用点位数量与热度排序。知识库没有足够相关的结果时，返回空结果。
 
-### 1. 安装依赖
+### 事实是事实，建议是建议
+
+地点、顺序、距离、耗时与交通字段由程序生成。AI 不能改写这些字段；缺少场景来源时，界面会明确显示「暂无集数资料」。
+
+### 一份正在生长的圣地地图
+
+当前随仓库提供的索引包含：
+
+- **7,966** 部作品元数据
+- **906** 部关联到圣地点位的作品
+- **23,173** 个有效点位
+
+数据规模以当前 `knowledge_base/index.json` 为准，会随知识库更新而变化。
+
+## 30 秒本地启动
+
+需要 Python 3.10–3.13。推荐使用 [uv](https://docs.astral.sh/uv/)：
 
 ```bash
 git clone https://github.com/lanerchenbuna/AnimeWay.git
 cd AnimeWay
+uv sync --frozen
+uv run streamlit run app.py
+```
+
+打开 `http://localhost:8501`，点击示例坐标或直接输入：
+
+```text
+京都有什么动画圣地
+```
+
+也可以使用 pip：
+
+```bash
 pip install -r requirements.txt
-```
-
-建议使用 Python 3.10+。
-
-### 2. 配置服务 Key
-
-可以在应用侧边栏输入：
-
-- DashScope Key：用于意图分类、推荐和路书生成。
-- 高德地图 Key：用于出发地解析和真实路线规划。
-
-也可以通过环境变量设置 DashScope：
-
-```bash
-export DASHSCOPE_API_KEY="sk-your-api-key"
-```
-
-### 3. 构建知识库索引
-
-仓库已包含可用数据。更新 raw 数据后，重新构建索引：
-
-```bash
-python data_factory/build_kb.py
-```
-
-增量同步 Anitabi 点位：
-
-```bash
-python data_factory/crawler.py
-python data_factory/build_kb.py
-```
-
-### 4. 启动应用
-
-```bash
 streamlit run app.py
 ```
 
-默认访问：
+## 可选在线能力
 
-```text
-http://localhost:8501
-```
+| 能力 | 是否需要 Key | 配置 |
+|---|:---:|---|
+| 作品 / 城市 / 主题检索 | 否 | — |
+| 收藏地点与离线路线预览 | 否 | — |
+| AI 推荐、攻略回答与行程建议 | 是 | `DASHSCOPE_API_KEY` 或侧边栏输入 |
+| 出发地解析与在线路线 | 是 | `AMAP_API_KEY` 或侧边栏输入 |
 
-## 应用流程
+Key 也可以只输入在当前 Streamlit 会话中，不会写入知识库。
 
-### 圣地观测
+> **地图能力说明**：当前在线路线接入高德 Web 服务。日本地区的地理编码、公交和铁路覆盖按 best-effort 使用；接口不可用或没有返回路径几何时，AnimeWay 会降级为离线估算并明确标记。详见 [地图服务覆盖与降级策略](docs/map-provider-coverage.md)。
 
-在发现页输入自然语言：
+## 中文 / English / 日本語
 
-- `孤独摇滚圣地`
-- `京都有什么动画圣地`
-- `咖啡店巡礼`
-- `推荐几部适合夏天巡礼的动画`
+界面右侧栏支持 `简体中文 / English / 日本語` 即时切换。确定性的页面文案、路线事实和 AI 建议语言会跟随当前选择。
 
-系统会根据意图返回作品候选、点位结果或 Agent 回答。选择作品后可以展开该作品的所有点位，并加入巡礼背包。
+### English
 
-### 冒险之书
+AnimeWay turns anime-location discovery into a complete pilgrimage workflow. Search by title, city, place, or theme; save matching spots; then preview a route with stops, distance, duration, and clearly disclosed offline estimates.
 
-在计划页管理背包地点：
+Local search and offline route previews work without an LLM key. AI features are optional and remain separate from structured itinerary facts.
 
-1. 可选输入出发地。
-2. 选择是否启用 TSP 排序。
-3. 生成路线预览。
-4. 查看结构化摘要、分段明细、地图和相册。
-5. 配置 DashScope Key 后生成 AI 路书。
-
-没有 Amap Key 时仍可生成离线预览路线。
-
-## 项目结构
-
-```text
-app.py                         # Streamlit 装配入口
-components/
-  discover.py                  # 发现页
-  plan.py                      # 计划页
-  sidebar.py                   # 侧边栏
-  state.py                     # session state 和 UI 动作
-  ui.py                        # HTML/UI helper
-core/
-  agent.py                     # Agent 装配入口
-  intent.py                    # 意图服务
-  search.py                    # 搜索服务
-  guide.py                     # 回答/推荐服务
-  planner.py                   # Agent 编排
-  retrieval.py                 # 本地 BM25 检索
-  route_planner.py             # 路线规划
-data_factory/
-  crawler.py                   # Anitabi 增量爬虫
-  build_kb.py                  # 知识库索引构建
-  schema.py                    # Pydantic schema
-knowledge_base/
-  index.json                   # 标准化知识库索引
-  raw/                         # 原始数据和爬取状态
-utils/
-  amap.py                      # 高德地图 API
-  ali_ai.py                    # DashScope 路书/推荐辅助
-tests/                         # 回归测试
-```
-
-## 验证
-
-运行测试：
+**Quick start**
 
 ```bash
-python -m pytest -q
+uv sync --frozen
+uv run streamlit run app.py
 ```
 
-当前覆盖：
+### 日本語
 
-- Phase 2 检索验收。
-- Phase 3 Agent 统一入口。
-- Phase 4 路线规划。
-- UI HTML 转义安全。
+AnimeWay は、作品名・都市・場所・テーマからアニメの舞台を探し、気になる場所を「巡礼バッグ」に保存して、ひとつの旅程として確認できる聖地巡礼アプリです。
+
+ローカル検索とオフライン経路プレビューは LLM キーなしで利用できます。AI は任意機能で、構造化された行程事実とは明確に分けて表示されます。
+
+**クイックスタート**
+
+```bash
+uv sync --frozen
+uv run streamlit run app.py
+```
+
+<details>
+<summary><strong>开发与质量检查 / Development</strong></summary>
+
+<br>
+
+安装开发依赖：
+
+```bash
+uv sync --frozen --group dev
+```
+
+运行代码检查与测试：
+
+```bash
+uv run ruff check .
+uv run mypy
+uv run pytest --cov --cov-report=term-missing
+```
+
+更新原始数据后重建知识库：
+
+```bash
+python -m data_factory.build_kb
+```
+
+运行版本化检索质量集与性能门槛：
+
+```bash
+uv run python -m evaluation.run_eval
+python -m evaluation.benchmark_retrieval
+```
+
+</details>
+
+## 数据与责任边界
+
+作品元数据和地点数据来自仓库中记录的外部来源，包括 [Bangumi](https://bgm.tv/) 与 [Anitabi](https://anitabi.cn/)。请遵守各来源的使用条款、署名要求与内容许可；外部数据、图片和品牌不会因为本项目代码采用 MIT License 而自动适用 MIT License。
+
+地点、交通、开放状态与费用都可能变化。出发前请通过官方渠道再次确认，并尊重当地居民、店铺规则与拍摄礼仪。
 
 ## License
 
-MIT
+AnimeWay 的项目代码采用 [MIT License](LICENSE)。第三方数据、图片、地图与在线服务分别受其各自条款约束。
