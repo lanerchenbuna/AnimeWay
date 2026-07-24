@@ -1,94 +1,201 @@
+import argparse
 import json
-import os
+import sys
 import time
-import pandas as pd
+from pathlib import Path
+from typing import Any
+
 from core.agent import AnimeRagAgent
+from core.retrieval import HybridRetriever
 
-# Configuration
-DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY") 
 
-def load_data(filepath):
-    if not os.path.exists(filepath):
-        # Create dummy data if not exists for demo purpose
-        print(f"⚠️ {filepath} not found. Creating dummy evaluation data.")
-        return [
-            {"query": "Where is the staircase from Your Name?", "expected_keywords": ["suga", "shrine", "stairs"]},
-            {"query": "I want to visit a cafe from Lycoris Recoil.", "expected_keywords": ["cafe", "lyco"]},
-            {"query": "Show me spots for Attack on Titan.", "expected_keywords": ["hita", "dam", "wall"]}
-        ]
-    with open(filepath, 'r', encoding='utf-8') as f:
-        return json.load(f)
+DEFAULT_DATASET = Path("evaluation/golden_retrieval.json")
+DEFAULT_RECALL_THRESHOLD = 0.90
+DEFAULT_MRR_THRESHOLD = 0.85
+DEFAULT_FALSE_POSITIVE_THRESHOLD = 0.05
 
-def calculate_overlap_score(response_text, expected_keywords):
-    """
-    Simple metric: Keyword Recall.
-    Checks how many expected keywords appear in the response.
-    """
-    if not expected_keywords: return 1.0 # No keywords expected
-    
-    response_lower = response_text.lower()
-    hit_count = sum(1 for k in expected_keywords if k.lower() in response_lower)
-    return hit_count / len(expected_keywords)
 
-def run_evaluation():
-    if not DASHSCOPE_API_KEY:
-        print("⚠️  DASHSCOPE_API_KEY is not set. Evaluation will skip actual API calls or fail.")
-    
-    # 1. Setup
-    agent = AnimeRagAgent()
-    eval_data = load_data("evaluation/eval_dataset.json")
-    
-    header = ["Query", "Expected Keywords", "Agent Response", "Overlap Score", "Latency (s)"]
-    results = []
-    
-    print(f"🚀 Starting Evaluation on {len(eval_data)} items...")
-    
-    # 2. Run Loop
-    for item in eval_data:
-        query = item.get("query")
-        expected = item.get("expected_keywords", [])
-        
-        start_time = time.time()
+def load_dataset(path: Path) -> dict[str, Any]:
+    with path.open(encoding="utf-8") as source:
+        payload = json.load(source)
+    if not isinstance(payload, dict) or not isinstance(payload.get("cases"), list):
+        raise ValueError(f"Invalid evaluation dataset: {path}")
+    if not payload["cases"]:
+        raise ValueError(f"Evaluation dataset contains no cases: {path}")
+    return payload
+
+
+def _search(retriever: Any, case: dict[str, Any], k: int) -> list[dict[str, Any]]:
+    target = case.get("target")
+    if target == "anime":
+        return retriever.search_anime(case["query"], k=k)
+    if target in {"city", "theme", "spot", "negative"}:
+        return retriever.search_spots(case["query"], k=k)
+    raise ValueError(f"Unsupported evaluation target: {target}")
+
+
+def _result_text(result: dict[str, Any]) -> str:
+    return HybridRetriever.normalize_text(
+        " ".join(
+            [
+                str(result.get("name") or ""),
+                str(result.get("city") or result.get("_city") or ""),
+                str(result.get("_anime_name") or result.get("cn") or ""),
+                str(result.get("description") or ""),
+                " ".join(str(tag) for tag in result.get("tags", [])),
+            ]
+        )
+    )
+
+
+def is_relevant(case: dict[str, Any], result: dict[str, Any]) -> bool:
+    relevance = case.get("relevance") or {}
+    anime_ids = {int(value) for value in relevance.get("anime_ids", [])}
+    if anime_ids:
+        candidate_id = result.get("anime_id") or result.get("id")
+        if candidate_id is None:
+            return False
         try:
-            if DASHSCOPE_API_KEY:
-                result = agent.run(query, api_key=DASHSCOPE_API_KEY)
-                response = result.get("response") or json.dumps(
-                    {
-                        "mode": result.get("mode"),
-                        "candidates": result.get("candidates", [])[:3],
-                        "spots": result.get("spots", [])[:3],
-                    },
-                    ensure_ascii=False,
-                )
-            else:
-                response = "Skipped (No API Key)"
-                
-        except Exception as e:
-            response = f"Error: {e}"
-        latency = round(time.time() - start_time, 2)
-        
-        score = calculate_overlap_score(response, expected)
-        
-        results.append([query, str(expected), response[:100]+"...", score, latency])
-        print(f"   Query: {query[:30]}... | Score: {score:.2f} | Time: {latency}s")
+            return int(candidate_id) in anime_ids
+        except (TypeError, ValueError):
+            return False
 
-    # 3. Report
-    df = pd.DataFrame(results, columns=header)
-    
-    avg_score = df["Overlap Score"].mean()
-    avg_latency = df["Latency (s)"].mean()
-    
-    print("\n" + "="*40)
-    print("📊 Evaluation Report")
-    print("="*40)
-    print(f"Total Samples: {len(df)}")
-    print(f"Average Keyword Recall: {avg_score:.2%}")
-    print(f"Average Latency: {avg_latency:.2f}s")
-    print("="*40)
-    
-    # Save Report
-    df.to_csv("evaluation/evaluation_report.csv", index=False)
-    print("✅ Report saved to evaluation/evaluation_report.csv")
+    result_text = _result_text(result)
+    expected_values = relevance.get("contains_any", [])
+    return bool(
+        expected_values
+        and any(
+            HybridRetriever.normalize_text(str(value)) in result_text
+            for value in expected_values
+        )
+    )
+
+
+def evaluate(
+    retriever: Any,
+    cases: list[dict[str, Any]],
+    k: int = 10,
+) -> dict[str, Any]:
+    positive_cases = [case for case in cases if case.get("target") != "negative"]
+    negative_cases = [case for case in cases if case.get("target") == "negative"]
+    positive_hits = 0
+    reciprocal_rank_sum = 0.0
+    false_hits: list[str] = []
+    case_results: list[dict[str, Any]] = []
+    latencies_ms: list[float] = []
+
+    for case in cases:
+        started_at = time.perf_counter()
+        results = _search(retriever, case, k)
+        latency_ms = (time.perf_counter() - started_at) * 1000
+        latencies_ms.append(latency_ms)
+
+        if case.get("target") == "negative":
+            if results:
+                false_hits.append(case["id"])
+            rank = None
+        else:
+            rank = next(
+                (
+                    index
+                    for index, result in enumerate(results, start=1)
+                    if is_relevant(case, result)
+                ),
+                None,
+            )
+            if rank is not None:
+                positive_hits += 1
+                reciprocal_rank_sum += 1 / rank
+
+        case_results.append(
+            {
+                "id": case["id"],
+                "query": case["query"],
+                "target": case["target"],
+                "rank": rank,
+                "result_count": len(results),
+                "latency_ms": round(latency_ms, 3),
+            }
+        )
+
+    positive_count = len(positive_cases)
+    negative_count = len(negative_cases)
+    return {
+        "case_count": len(cases),
+        "positive_count": positive_count,
+        "negative_count": negative_count,
+        "recall_at_k": positive_hits / positive_count if positive_count else 1.0,
+        "mrr": reciprocal_rank_sum / positive_count if positive_count else 1.0,
+        "false_positive_rate": len(false_hits) / negative_count if negative_count else 0.0,
+        "false_hit_ids": false_hits,
+        "max_latency_ms": round(max(latencies_ms, default=0.0), 3),
+        "cases": case_results,
+    }
+
+
+def threshold_failures(
+    metrics: dict[str, Any],
+    recall_threshold: float,
+    mrr_threshold: float,
+    false_positive_threshold: float,
+) -> dict[str, str]:
+    failures = {}
+    if metrics["recall_at_k"] < recall_threshold:
+        failures["recall_at_k"] = (
+            f"{metrics['recall_at_k']:.3f} < {recall_threshold:.3f}"
+        )
+    if metrics["mrr"] < mrr_threshold:
+        failures["mrr"] = f"{metrics['mrr']:.3f} < {mrr_threshold:.3f}"
+    if metrics["false_positive_rate"] >= false_positive_threshold:
+        failures["false_positive_rate"] = (
+            f"{metrics['false_positive_rate']:.3f} >= "
+            f"{false_positive_threshold:.3f}"
+        )
+    return failures
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Run the versioned Chinese retrieval golden set.")
+    parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
+    parser.add_argument("--k", type=int, default=10)
+    parser.add_argument("--min-recall", type=float, default=DEFAULT_RECALL_THRESHOLD)
+    parser.add_argument("--min-mrr", type=float, default=DEFAULT_MRR_THRESHOLD)
+    parser.add_argument(
+        "--max-false-positive-rate",
+        type=float,
+        default=DEFAULT_FALSE_POSITIVE_THRESHOLD,
+    )
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+
+    payload = load_dataset(args.dataset)
+    retriever = AnimeRagAgent().retriever
+    metrics = evaluate(retriever, payload["cases"], k=max(1, args.k))
+    failures = threshold_failures(
+        metrics,
+        recall_threshold=args.min_recall,
+        mrr_threshold=args.min_mrr,
+        false_positive_threshold=args.max_false_positive_rate,
+    )
+    report = {
+        "dataset": str(args.dataset),
+        "dataset_version": payload.get("version"),
+        "metrics": metrics,
+        "thresholds": {
+            "min_recall": args.min_recall,
+            "min_mrr": args.min_mrr,
+            "max_false_positive_rate": args.max_false_positive_rate,
+        },
+        "failures": failures,
+    }
+    rendered = json.dumps(report, ensure_ascii=False, indent=2)
+    print(rendered)
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(rendered + "\n", encoding="utf-8")
+    if failures:
+        sys.exit(1)
+
 
 if __name__ == "__main__":
-    run_evaluation()
+    main()

@@ -3,17 +3,21 @@ import re
 
 
 class SearchService:
-    def __init__(self, knowledge_base: List[Dict], retriever):
-        self.knowledge_base = knowledge_base
+    def __init__(self, knowledge_base: List[Dict] | None, retriever):
+        self.knowledge_base = knowledge_base or []
         self.retriever = retriever
         self._anime_by_id = {
             int(item.get("anime_id")): item
-            for item in knowledge_base
+            for item in self.knowledge_base
             if item.get("anime_id") is not None
-        }
+        } if isinstance(self.knowledge_base, list) else {}
 
     def anime_item(self, anime_id: int) -> Dict | None:
-        return self._anime_by_id.get(int(anime_id))
+        item = self._anime_by_id.get(int(anime_id))
+        if item is not None:
+            return item
+        getter = getattr(self.retriever, "get_anime_item", None)
+        return getter(int(anime_id)) if getter else None
 
     def search_anime(self, query: str, k: int = 20) -> List[Dict]:
         return self.retriever.search_anime(query, k=k)
@@ -53,14 +57,11 @@ class SearchService:
             "context": [],
         }
 
-    @staticmethod
-    def _looks_like_spot_query(query: str) -> bool:
+    def _looks_like_spot_query(self, query: str) -> bool:
         return bool(
-            re.search(
-                r"京都|东京|東京|大阪|镰仓|鎌倉|下北|咖啡|cafe|coffee|喫茶|カフェ|学校|高校|神社|寺|车站|駅",
-                query,
-                re.IGNORECASE,
-            )
+            self.retriever.extract_location_terms(query)
+            or self.retriever.extract_theme_terms(query)
+            or re.search(r"学校|高校|神社|寺|车站|駅|场景|景点", query, re.IGNORECASE)
         )
 
     def guide_context(self, query: str, anime_name: str | None = None, limit: int = 3) -> List[Dict]:

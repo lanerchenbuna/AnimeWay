@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import time
@@ -15,6 +16,9 @@ ANITABI_BASE_URL = "https://api.anitabi.cn/bangumi/{}/points/detail"
 ANITABI_LITE_URL = "https://api.anitabi.cn/bangumi/{}/lite"
 DELAY_SECONDS = 0.5  # Be polite to the API
 HEADERS = {'User-Agent': 'AnimePilgrimage/1.0'}
+MAX_HTTP_ATTEMPTS = 3
+MAX_STATE_RETRIES = 3
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 def load_bangumi_ids(filepath: str) -> List[Dict]:
     """Loads anime metadata from the user-provided JSON."""
@@ -78,6 +82,10 @@ def normalize_crawled_point(point: Dict, anime_id: int, title: str, anime_city: 
         "city": point.get("city") or anime_city,
         "description": point.get("description") or point.get("content"),
         "tags": point.get("tags") or [title],
+        "source_url": point.get("source_url"),
+        "episode": point.get("episode"),
+        "scene": point.get("scene"),
+        "verified_at": point.get("verified_at"),
     }
 
 def load_existing_points(filepath: str) -> Tuple[List[Dict], set[int]]:
@@ -119,12 +127,29 @@ def update_state(state: Dict, subject_id: int, status: str, title: str, point_co
         "updated_at": datetime.now().isoformat(timespec="seconds"),
     }
 
+def request_with_backoff(url: str):
+    last_error = ""
+    for attempt in range(MAX_HTTP_ATTEMPTS):
+        try:
+            response = requests.get(url, headers=HEADERS, timeout=5)
+            if response.status_code not in RETRYABLE_STATUS_CODES:
+                return response, ""
+            last_error = f"HTTP {response.status_code}"
+        except requests.RequestException as exc:
+            response = None
+            last_error = type(exc).__name__
+        if attempt < MAX_HTTP_ATTEMPTS - 1:
+            time.sleep(DELAY_SECONDS * (2 ** attempt))
+    return response, last_error
+
 def fetch_anitabi_lite_city(subject_id: str) -> str:
     """Fetches the main city for the anime from the lite endpoint."""
     url = ANITABI_LITE_URL.format(subject_id)
     
     try:
-        response = requests.get(url, headers=HEADERS, timeout=5)
+        response, _ = request_with_backoff(url)
+        if response is None:
+            return ""
         if response.status_code == 200:
             data = response.json()
             return data.get("city") or ""
@@ -137,7 +162,9 @@ def fetch_anitabi_points(subject_id: str) -> Tuple[str, List[Dict], str]:
     url = ANITABI_BASE_URL.format(subject_id)
     
     try:
-        response = requests.get(url, headers=HEADERS, timeout=5)
+        response, request_error = request_with_backoff(url)
+        if response is None:
+            return "failed", [], request_error or "Network error"
         if response.status_code == 200:
             data = response.json()
             if isinstance(data, list):
@@ -153,7 +180,7 @@ def fetch_anitabi_points(subject_id: str) -> Tuple[str, List[Dict], str]:
         print(f"   ⚠️ Connection Error for ID {subject_id}: {e}")
         return "failed", [], str(e)
         
-def main():
+def main(bootstrap_state_only: bool = False):
     print("🚀 [Sync] Starting Anitabi Sync Job...")
     
     # 1. Load Data
@@ -200,6 +227,18 @@ def main():
                 point_count=point_count,
             )
 
+    pending_added = 0
+    for anime_id, title in title_by_id.items():
+        if str(anime_id) not in state:
+            update_state(state, anime_id, "pending", title, point_count=0)
+            pending_added += 1
+    if pending_added:
+        save_json_file(STATE_FILE, state)
+        print(f"🧾 Added {pending_added} pending anime IDs to the crawl state.")
+    if bootstrap_state_only:
+        print(f"✅ State bootstrap complete: {len(state)} tracked anime IDs.")
+        return
+
     completed_from_state = {
         int(k)
         for k, v in state.items()
@@ -221,6 +260,13 @@ def main():
 
         if sid_int in completed_ids:
             print(f"[{i+1}/{len(top_subjects)}] Skipping completed: {title} (ID: {sid_int})")
+            continue
+        previous_state = state.get(str(sid_int), {})
+        if previous_state.get("status") == "failed" and int(previous_state.get("retries", 0)) >= MAX_STATE_RETRIES:
+            print(
+                f"[{i+1}/{len(top_subjects)}] Skipping retry limit: "
+                f"{title} (ID: {sid_int}, retries: {previous_state.get('retries')})"
+            )
             continue
         
         print(f"[{i+1}/{len(top_subjects)}] Checking: {title} (ID: {sid_int})...", end="", flush=True)
@@ -257,7 +303,7 @@ def main():
         time.sleep(DELAY_SECONDS)
         
         # Incremental Save every 50 items
-        if (i + 1) % 50 == 0:
+        if (i + 1) % 25 == 0:
             print(f"\n💾 [Checkpoint] Saving {len(crawled_points)} spots so far...")
             save_json_file(OUTPUT_FILE, crawled_points)
             save_json_file(STATE_FILE, state)
@@ -270,4 +316,11 @@ def main():
     print("🎉 Sync Complete!")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Incrementally sync Anitabi pilgrimage points.")
+    parser.add_argument(
+        "--bootstrap-state-only",
+        action="store_true",
+        help="Record pending/success states without making network requests.",
+    )
+    args = parser.parse_args()
+    main(bootstrap_state_only=args.bootstrap_state_only)

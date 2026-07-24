@@ -1,0 +1,126 @@
+{
+  "version": "1.0.0",
+  "description": "AnimeWay 中文作品、城市、主题和无关查询黄金集",
+  "cases": [
+    {
+      "id": "anime-starlight",
+      "target": "anime",
+      "query": "少女歌剧",
+      "relevance": {"anime_ids": [214265]}
+    },
+    {
+      "id": "anime-starlight-typo",
+      "target": "anime",
+      "query": "少钕歌剧",
+      "relevance": {"anime_ids": [214265]}
+    },
+    {
+      "id": "anime-bocchi",
+      "target": "anime",
+      "query": "孤独摇滚",
+      "relevance": {"anime_ids": [328609]}
+    },
+    {
+      "id": "anime-k-on",
+      "target": "anime",
+      "query": "轻音少女",
+      "relevance": {"anime_ids": [1424]}
+    },
+    {
+      "id": "anime-your-name",
+      "target": "anime",
+      "query": "你的名字",
+      "relevance": {"anime_ids": [160209]}
+    },
+    {
+      "id": "anime-hyouka",
+      "target": "anime",
+      "query": "冰菓",
+      "relevance": {"anime_ids": [27364]}
+    },
+    {
+      "id": "city-kyoto",
+      "target": "city",
+      "query": "京都有什么动画圣地",
+      "relevance": {"contains_any": ["京都"]}
+    },
+    {
+      "id": "city-yokohama",
+      "target": "city",
+      "query": "横滨有什么动画圣地",
+      "relevance": {"contains_any": ["横滨", "横浜"]}
+    },
+    {
+      "id": "city-nanto",
+      "target": "city",
+      "query": "南砺市",
+      "relevance": {"contains_any": ["南砺"]}
+    },
+    {
+      "id": "city-kamakura",
+      "target": "city",
+      "query": "镰仓圣地",
+      "relevance": {"contains_any": ["镰仓", "鎌倉"]}
+    },
+    {
+      "id": "theme-cafe",
+      "target": "theme",
+      "query": "咖啡店巡礼",
+      "relevance": {"contains_any": ["咖啡", "cafe", "喫茶", "カフェ"]}
+    },
+    {
+      "id": "theme-shrine",
+      "target": "theme",
+      "query": "神社圣地",
+      "relevance": {"contains_any": ["神社", "寺"]}
+    },
+    {
+      "id": "theme-school",
+      "target": "theme",
+      "query": "学校取景地",
+      "relevance": {"contains_any": ["学校", "高校", "学園"]}
+    },
+    {
+      "id": "theme-music",
+      "target": "theme",
+      "query": "音乐圣地",
+      "relevance": {"contains_any": ["音乐", "乐队", "live", "ライブ", "band"]}
+    },
+    {
+      "id": "negative-quantum-banana",
+      "target": "negative",
+      "query": "量子香蕉飞船",
+      "relevance": {}
+    },
+    {
+      "id": "negative-mars-supermarket",
+      "target": "negative",
+      "query": "火星北极超级市场",
+      "relevance": {}
+    },
+    {
+      "id": "negative-neutrino-ramen",
+      "target": "negative",
+      "query": "中微子拉面观测站",
+      "relevance": {}
+    },
+    {
+      "id": "negative-plasma-castle",
+      "target": "negative",
+      "query": "等离子海底城堡",
+      "relevance": {}
+    },
+    {
+      "id": "negative-gravity-library",
+      "target": "negative",
+      "query": "反重力沙漠图书馆",
+      "relevance": {}
+    },
+    {
+      "id": "negative-photon-orchard",
+      "target": "negative",
+      "query": "光子苹果园机场",
+      "relevance": {}
+    }
+  ]
+}

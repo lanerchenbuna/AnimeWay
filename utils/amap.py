@@ -1,12 +1,55 @@
 import requests
+from typing import Any
 from urllib.parse import urlencode
+
+
+PROVIDER = "amap"
+API_VERSION = "v3"
+REQUEST_TIMEOUT_SECONDS = 5
+
+
+def _parse_polyline(value: Any) -> list[list[float]]:
+    coordinates: list[list[float]] = []
+    if not isinstance(value, str):
+        return coordinates
+    for pair in value.split(";"):
+        try:
+            lon, lat = pair.split(",", 1)
+            coordinate = [float(lon), float(lat)]
+        except (TypeError, ValueError):
+            continue
+        if not coordinates or coordinate != coordinates[-1]:
+            coordinates.append(coordinate)
+    return coordinates
+
+
+def _collect_polylines(value: Any) -> list[list[float]]:
+    coordinates: list[list[float]] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            child_coordinates = (
+                _parse_polyline(child)
+                if key == "polyline"
+                else _collect_polylines(child)
+            )
+            for coordinate in child_coordinates:
+                if not coordinates or coordinate != coordinates[-1]:
+                    coordinates.append(coordinate)
+    elif isinstance(value, list):
+        for child in value:
+            for coordinate in _collect_polylines(child):
+                if not coordinates or coordinate != coordinates[-1]:
+                    coordinates.append(coordinate)
+    return coordinates
+
 
 def get_static_map_url(points, key, zoom=10, size="750*300"):
     """
     Generate Amap Static Map URL.
     points: list of (lon, lat) tuples.
     """
-    if not points: return ""
+    if not points:
+        return ""
     
     # 1. Markers: start, mid, end
     locations = [f"{p[0]},{p[1]}" for p in points]
@@ -34,7 +77,7 @@ def get_location_coords(address, key, city=None):
         params["city"] = city
     
     try:
-        res = requests.get(url, params=params, timeout=5).json()
+        res = requests.get(url, params=params, timeout=REQUEST_TIMEOUT_SECONDS).json()
         if res['status'] == '1' and res['geocodes']:
             location = res['geocodes'][0]['location']
             lon, lat = location.split(',')
@@ -48,14 +91,15 @@ def get_address_from_coords(lon, lat, key):
     """
     Reverse Geocode: (lon, lat) -> Formatted Address.
     """
-    if not key: return f"{lat:.5f}, {lon:.5f}"
+    if not key:
+        return f"{lat:.5f}, {lon:.5f}"
     
     location = f"{lon},{lat}"
     url = "https://restapi.amap.com/v3/geocode/regeo"
     params = {"location": location, "key": key, "radius": 100, "extensions": "base"}
     
     try:
-        res = requests.get(url, params=params, timeout=5).json()
+        res = requests.get(url, params=params, timeout=REQUEST_TIMEOUT_SECONDS).json()
         if res['status'] == '1':
             return res['regeocode']['formatted_address']
     except Exception as e:
@@ -70,10 +114,15 @@ def get_walking_route(origin_lon, origin_lat, dest_lon, dest_lat, key):
     origin = f"{origin_lon},{origin_lat}"
     destination = f"{dest_lon},{dest_lat}"
     url = "https://restapi.amap.com/v3/direction/walking"
-    params = {"origin": origin, "destination": destination, "key": key}
+    params = {
+        "origin": origin,
+        "destination": destination,
+        "key": key,
+        "extensions": "all",
+    }
     
     try:
-        res = requests.get(url, params=params, timeout=5).json()
+        res = requests.get(url, params=params, timeout=REQUEST_TIMEOUT_SECONDS).json()
         if res['status'] == '1' and res['route']['paths']:
             path = res['route']['paths'][0]
             distance = path['distance']
@@ -88,13 +137,23 @@ def get_walking_route(origin_lon, origin_lat, dest_lon, dest_lat, key):
                 "distance_m": distance,
                 "duration_min": duration,
                 "steps": steps,
+                "polyline": _collect_polylines(path.get("steps", [])),
                 "raw": path
             }
     except Exception as e:
         print(f"Walking Route Error: {e}")
     return None
 
-def get_transit_route(origin_lon, origin_lat, dest_lon, dest_lat, city, key, strategy=0):
+def get_transit_route(
+    origin_lon,
+    origin_lat,
+    dest_lon,
+    dest_lat,
+    city,
+    key,
+    strategy=0,
+    destination_city=None,
+):
     """
     Get Transit steps from Amap Web API v3 (Integrated).
     Strategies:
@@ -106,13 +165,23 @@ def get_transit_route(origin_lon, origin_lat, dest_lon, dest_lat, city, key, str
     origin = f"{origin_lon},{origin_lat}"
     destination = f"{dest_lon},{dest_lat}"
     # city can be city code or name.
-    if not city: city = "此地"
+    if not city:
+        city = "此地"
     
     url = "https://restapi.amap.com/v3/direction/transit/integrated"
-    params = {"origin": origin, "destination": destination, "city": city, "key": key, "strategy": strategy}
+    params = {
+        "origin": origin,
+        "destination": destination,
+        "city": city,
+        "key": key,
+        "strategy": strategy,
+        "extensions": "all",
+    }
+    if destination_city and destination_city != city:
+        params["cityd"] = destination_city
     
     try:
-        res = requests.get(url, params=params, timeout=5).json()
+        res = requests.get(url, params=params, timeout=REQUEST_TIMEOUT_SECONDS).json()
         if res['status'] == '1' and res['route']['transits']:
             # Pick the first route
             route = res['route']['transits'][0]
@@ -120,32 +189,40 @@ def get_transit_route(origin_lon, origin_lat, dest_lon, dest_lat, city, key, str
             # Safe Parsing
             try:
                 distance = float(route.get('distance', 0))
-            except: distance = 0.0
+            except (TypeError, ValueError):
+                distance = 0.0
             
             try:
                 duration = int(route.get('duration', 0)) // 60
-            except: duration = 0
+            except (TypeError, ValueError):
+                duration = 0
             
             # Cost handling: sometimes it's a list or string
             raw_cost = route.get('cost')
             cost = 0.0
             if isinstance(raw_cost, list) and raw_cost:
-                 try: cost = float(raw_cost[0].get('cost', 0))
-                 except: pass
+                try:
+                    cost = float(raw_cost[0].get('cost', 0))
+                except (AttributeError, TypeError, ValueError):
+                    pass
             elif isinstance(raw_cost, str) and raw_cost:
-                 try: cost = float(raw_cost)
-                 except: pass
+                try:
+                    cost = float(raw_cost)
+                except ValueError:
+                    pass
             elif isinstance(raw_cost, (int, float)):
-                 cost = float(raw_cost)
+                cost = float(raw_cost)
 
             segments_desc = []
+            has_railway = False
             for seg in route['segments']:
                 # Walking part
                 if seg.get('walking') and seg['walking']['steps']:
                     try:
                         dist = seg['walking']['distance']
                         segments_desc.append(f"步行 {dist}米")
-                    except: pass
+                    except (KeyError, TypeError):
+                        pass
                 
                 # Bus/Subway part
                 if seg.get('bus') and seg['bus']['buslines']:
@@ -154,21 +231,25 @@ def get_transit_route(origin_lon, origin_lat, dest_lon, dest_lat, city, key, str
                         name = line['name'].split('(')[0]
                         stations = line.get('num_stops', '?')
                         segments_desc.append(f"乘坐 [{name}] ({stations}站)")
-                    except: pass
+                    except (AttributeError, IndexError, KeyError, TypeError):
+                        pass
                 
                 # Railway part (sometimes appears for intercity)
                 if seg.get('railway') and seg['railway']['name']:
-                     try:
+                    has_railway = True
+                    try:
                         r_name = seg['railway']['name']
                         segments_desc.append(f"乘坐 [{r_name}]")
-                     except: pass
+                    except (KeyError, TypeError):
+                        pass
             
             return {
-                "type": "transit",
+                "type": "rail" if has_railway else "transit",
                 "distance_m": distance,
                 "duration_min": duration,
                 "cost": cost,
-                "steps": segments_desc, 
+                "steps": segments_desc,
+                "polyline": _collect_polylines(route.get("segments", [])),
                 "raw": route
             }
     except Exception as e:
@@ -184,10 +265,16 @@ def get_driving_route(origin_lon, origin_lat, dest_lon, dest_lat, key):
     origin = f"{origin_lon},{origin_lat}"
     destination = f"{dest_lon},{dest_lat}"
     url = "https://restapi.amap.com/v3/direction/driving"
-    params = {"origin": origin, "destination": destination, "key": key, "strategy": 0}
+    params = {
+        "origin": origin,
+        "destination": destination,
+        "key": key,
+        "strategy": 0,
+        "extensions": "all",
+    }
     
     try:
-        res = requests.get(url, params=params, timeout=5).json()
+        res = requests.get(url, params=params, timeout=REQUEST_TIMEOUT_SECONDS).json()
         if res['status'] == '1' and res['route']['paths']:
             path = res['route']['paths'][0]
             distance = int(path['distance'])
@@ -203,6 +290,7 @@ def get_driving_route(origin_lon, origin_lat, dest_lon, dest_lat, key):
                 "duration_min": duration,
                 "cost": 0, # Driving usually has no ticket cost (except tolls, but simplified here)
                 "steps": steps,
+                "polyline": _collect_polylines(path.get("steps", [])),
                 "raw": path
             }
     except Exception as e:
@@ -218,9 +306,15 @@ def get_regeo_city(lon, lat, key):
     url = "https://restapi.amap.com/v3/geocode/regeo"
     params = {"location": location, "key": key, "radius": 100, "extensions": "base"}
     try:
-        res = requests.get(url, params=params, timeout=5).json()
+        res = requests.get(url, params=params, timeout=REQUEST_TIMEOUT_SECONDS).json()
         if res['status'] == '1':
-            return res['regeocode']['addressComponent']['citycode'] or res['regeocode']['addressComponent']['adcode']
+            component = res["regeocode"]["addressComponent"]
+            return (
+                component.get("citycode")
+                or component.get("adcode")
+                or component.get("city")
+                or ""
+            )
     except Exception as e:
         print(f"Get City Code Error: {e}")
     return ""

@@ -4,6 +4,7 @@ import os
 import pickle
 import re
 from collections import Counter
+from difflib import SequenceMatcher
 from typing import Dict, List
 
 
@@ -39,6 +40,26 @@ class HybridRetriever:
         "想去",
         "看看",
     }
+    QUERY_NOISE = {
+        "有什么",
+        "有哪些",
+        "动画",
+        "动漫",
+        "番剧",
+        "番",
+        "圣地",
+        "巡礼",
+        "取景地",
+        "取景",
+        "地点",
+        "地方",
+        "推荐",
+        "想去",
+        "看看",
+        "哪里",
+        "在哪",
+        "在哪里",
+    }
     SUFFIXES = ["的圣地", "圣地巡礼", "圣地", "巡礼", "取景地", "取景", "在哪里", "在哪", "原型", "位置"]
     THEME_ALIASES = {
         "咖啡": ["咖啡", "咖啡店", "cafe", "coffee", "喫茶", "カフェ"],
@@ -59,6 +80,8 @@ class HybridRetriever:
         "鎌倉": ["镰仓", "鎌倉"],
         "下北泽": ["下北泽", "下北沢"],
         "下北沢": ["下北泽", "下北沢"],
+        "横滨": ["横滨", "横滨市", "横浜", "横浜市"],
+        "横浜": ["横滨", "横滨市", "横浜", "横浜市"],
     }
     ICONIC_SPOT_TERMS = {
         "shelter": 35,
@@ -73,6 +96,10 @@ class HybridRetriever:
         "カフェ": 10,
         "駅": 4,
     }
+    ANIME_MIN_SCORE = 12.0
+    SPOT_MIN_SCORE = 12.0
+    LOW_CONFIDENCE_SCORE = 25.0
+    MIN_LOW_CONFIDENCE_GAP = 2.0
 
     def __init__(self, knowledge_base: List[Dict], cache_dir: str | None = None):
         self.knowledge_base = knowledge_base
@@ -84,7 +111,9 @@ class HybridRetriever:
         self._spot_idf = {}
         self._anime_avgdl = 1.0
         self._spot_avgdl = 1.0
+        self._location_aliases = self._build_location_aliases()
         self._build_indexes()
+        self._title_ngram_index = self._build_title_ngram_index()
 
     @staticmethod
     def normalize_text(text: str) -> str:
@@ -95,7 +124,54 @@ class HybridRetriever:
         query_norm = cls.normalize_text(query)
         for suffix in cls.SUFFIXES:
             query_norm = query_norm.replace(cls.normalize_text(suffix), "")
+        for noise in sorted(cls.QUERY_NOISE, key=len, reverse=True):
+            query_norm = query_norm.replace(cls.normalize_text(noise), "")
         return query_norm.strip()
+
+    def _build_location_aliases(self) -> Dict[str, List[str]]:
+        aliases = {key: list(values) for key, values in self.LOCATION_ALIASES.items()}
+        for item in self.knowledge_base:
+            for spot in item.get("spots", []):
+                city = str(spot.get("city") or spot.get("_city") or "").strip()
+                if not city:
+                    continue
+                variants = {city}
+                if len(city) > 2 and city[-1] in {"市", "县", "県", "府", "区", "州"}:
+                    variants.add(city[:-1])
+                for variant in variants:
+                    aliases.setdefault(variant, [])
+                    aliases[variant].extend(variants)
+
+        return {
+            key: list(dict.fromkeys(value))
+            for key, value in aliases.items()
+            if self.normalize_text(key)
+        }
+
+    def _build_title_ngram_index(self) -> Dict[str, List[int]]:
+        index: Dict[str, List[int]] = {}
+        for doc_index, doc in enumerate(self._anime_docs):
+            grams = {
+                title[offset : offset + 2]
+                for title in doc["title_norms"]
+                if title
+                for offset in range(max(0, len(title) - 1))
+            }
+            for gram in grams:
+                index.setdefault(gram, []).append(doc_index)
+        return index
+
+    def _fuzzy_title_candidates(self, query_norm: str) -> List[Dict]:
+        grams = {
+            query_norm[offset : offset + 2]
+            for offset in range(max(0, len(query_norm) - 1))
+        }
+        candidate_indexes = {
+            doc_index
+            for gram in grams
+            for doc_index in self._title_ngram_index.get(gram, [])
+        }
+        return [self._anime_docs[index] for index in candidate_indexes]
 
     @classmethod
     def tokenize(cls, text: str) -> List[str]:
@@ -130,6 +206,14 @@ class HybridRetriever:
         for key, aliases in cls.LOCATION_ALIASES.items():
             if cls.normalize_text(key) in compact:
                 expanded.extend(cls.tokenize(" ".join(aliases)))
+        return list(dict.fromkeys(expanded))
+
+    def _expand_dynamic_location_tokens(self, query: str, tokens: List[str]) -> List[str]:
+        compact = self.normalize_text(query)
+        expanded = list(tokens)
+        for key, aliases in self._location_aliases.items():
+            if self.normalize_text(key) in compact:
+                expanded.extend(self.tokenize(" ".join(aliases)))
         return list(dict.fromkeys(expanded))
 
     @staticmethod
@@ -299,14 +383,15 @@ class HybridRetriever:
         """
         Search anime titles/metadata and return UI-friendly candidates.
         """
-        query_tokens = self.expand_query_tokens(query)
+        query_tokens = self._expand_dynamic_location_tokens(query, self.expand_query_tokens(query))
         q_norm = self.normalize_text(query)
         q_clean = self.clean_query(query) or q_norm
         scored = []
 
         for doc in self._anime_docs:
             item = doc["item"]
-            score = self._bm25_score(doc, query_tokens, self._anime_idf, self._anime_avgdl)
+            lexical_score = self._bm25_score(doc, query_tokens, self._anime_idf, self._anime_avgdl)
+            score = lexical_score
 
             title_score = 0.0
             for title_norm in doc["title_norms"]:
@@ -318,26 +403,46 @@ class HybridRetriever:
                     title_score = max(title_score, 95)
                 elif q_clean in title_norm:
                     title_score = max(title_score, 70)
-                elif title_norm in q_clean:
+                elif len(title_norm) >= 3 and title_norm in q_clean:
                     title_score = max(title_score, 55)
+            exact_text_match = bool(q_clean and q_clean in doc["norm_text"])
+            has_evidence = title_score > 0 or exact_text_match
+            if not has_evidence:
+                continue
 
-            if q_clean and q_clean in doc["norm_text"]:
+            if exact_text_match:
                 score += 12
             score += title_score
             if doc["spots_count"]:
                 score += min(28, math.log1p(doc["spots_count"]) * 7)
 
-            if score > 0:
+            if score >= self.ANIME_MIN_SCORE:
+                scored.append((score, item))
+
+        if not scored and len(q_clean) >= 3:
+            for doc in self._fuzzy_title_candidates(q_clean):
+                if not any(
+                    len(q_clean) <= len(title_norm) + 2
+                    and self._is_fuzzy_match(q_clean, title_norm)
+                    for title_norm in doc["title_norms"]
+                ):
+                    continue
+                item = doc["item"]
+                score = 45.0 + self._bm25_score(doc, query_tokens, self._anime_idf, self._anime_avgdl)
+                if doc["spots_count"]:
+                    score += min(28, math.log1p(doc["spots_count"]) * 7)
                 scored.append((score, item))
 
         scored.sort(key=lambda pair: pair[0], reverse=True)
+        if not self._passes_confidence(scored, self.ANIME_MIN_SCORE):
+            return []
         return [self._format_anime_candidate(item, score) for score, item in scored[:k]]
 
     def search_spots(self, query: str, k: int = 20) -> List[Dict]:
         """
         Search individual pilgrimage spots by anime title, city, place name, or theme.
         """
-        query_tokens = self.expand_query_tokens(query)
+        query_tokens = self._expand_dynamic_location_tokens(query, self.expand_query_tokens(query))
         q_norm = self.normalize_text(query)
         q_clean = self.clean_query(query) or q_norm
         location_terms = self._extract_location_terms(q_norm)
@@ -354,19 +459,27 @@ class HybridRetriever:
             location_match = self._location_match_score(doc, location_terms)
             theme_match = self._theme_match_score(doc, theme_terms)
 
+            direct_match = False
             if q_clean and q_clean in doc["name_norm"]:
                 score += 80
+                direct_match = True
             if q_clean and q_clean in doc["city_norm"]:
                 score += 90
+                direct_match = True
             if q_clean and any(q_clean in title_norm for title_norm in doc["anime_title_norms"]):
                 score += 55
+                direct_match = True
+            anime_match = anime_id in anime_boosts
+            has_evidence = direct_match or anime_match or location_match > 0 or theme_match > 0
+            if not has_evidence:
+                continue
 
             score += location_match
             score += theme_match
             score += anime_boosts.get(anime_id, 0)
             score += self._iconic_spot_bonus(doc)
 
-            if score > 0:
+            if score >= self.SPOT_MIN_SCORE:
                 scored.append((score, location_match, theme_match, item, spot))
 
         if location_terms and any(location_score > 0 for _, location_score, _, _, _ in scored):
@@ -375,11 +488,13 @@ class HybridRetriever:
             scored = [row for row in scored if row[2] > 0]
 
         scored.sort(key=lambda row: row[0], reverse=True)
+        if not self._passes_confidence(scored, self.SPOT_MIN_SCORE):
+            return []
         return [self._format_spot_result(item, spot, score) for score, _, _, item, spot in scored[:k]]
 
     def _extract_location_terms(self, query_norm: str) -> List[str]:
         terms = []
-        for key, aliases in self.LOCATION_ALIASES.items():
+        for key, aliases in self._location_aliases.items():
             if self.normalize_text(key) in query_norm or any(self.normalize_text(alias) in query_norm for alias in aliases):
                 terms.extend(aliases)
         return list(dict.fromkeys(terms))
@@ -421,6 +536,35 @@ class HybridRetriever:
     def _iconic_spot_bonus(self, doc: Dict) -> float:
         text = doc["norm_text"]
         return sum(weight for term, weight in self.ICONIC_SPOT_TERMS.items() if self.normalize_text(term) in text)
+
+    @staticmethod
+    def _is_fuzzy_match(query_norm: str, field_norm: str) -> bool:
+        if not query_norm or not field_norm or min(len(query_norm), len(field_norm)) < 3:
+            return False
+        if abs(len(query_norm) - len(field_norm)) <= 2:
+            return SequenceMatcher(None, query_norm, field_norm).ratio() >= 0.75
+
+        short, long = sorted((query_norm, field_norm), key=len)
+        if len(short) < 4:
+            return False
+        return any(
+            SequenceMatcher(None, short, long[start : start + len(short)]).ratio() >= 0.75
+            for start in range(len(long) - len(short) + 1)
+        )
+
+    @classmethod
+    def _passes_confidence(cls, scored: List[tuple], min_score: float) -> bool:
+        if not scored or scored[0][0] < min_score:
+            return False
+        if len(scored) == 1 or scored[0][0] >= cls.LOW_CONFIDENCE_SCORE:
+            return True
+        return scored[0][0] - scored[1][0] >= cls.MIN_LOW_CONFIDENCE_GAP
+
+    def extract_location_terms(self, query: str) -> List[str]:
+        return self._extract_location_terms(self.normalize_text(query))
+
+    def extract_theme_terms(self, query: str) -> List[str]:
+        return self._extract_theme_terms(self.normalize_text(query))
 
     @staticmethod
     def _format_anime_candidate(item: Dict, score: float | None = None) -> Dict:

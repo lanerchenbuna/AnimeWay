@@ -6,11 +6,15 @@ class Spot(BaseModel):
     id: str
     name: str # The specific location name
     image: Optional[str] = None
-    lat: float
-    lon: float
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
     description: Optional[str] = None
     city: Optional[str] = None # Enriched city name
     tags: List[str] = Field(default_factory=list)
+    source_url: Optional[str] = None
+    episode: Optional[str] = None
+    scene: Optional[str] = None
+    verified_at: Optional[str] = None
 
     @field_validator('name')
     def normalize_name(cls, v):
