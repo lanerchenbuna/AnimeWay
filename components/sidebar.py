@@ -77,7 +77,7 @@ def render_sidebar() -> tuple[str, str]:
 
         st.markdown(
             '<div class="sidebar-footer"><span class="signal-dot"></span>'
-            "LOCAL INDEX ONLINE<br><small>AnimeWay / 0.2</small></div>",
+            "LOCAL INDEX ONLINE<br><small>AnimeWay / 0.10 · Travel records</small></div>",
             unsafe_allow_html=True,
         )
 

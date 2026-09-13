@@ -20,6 +20,26 @@
     --aw-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
+/* The handbook is used on a phone in the street as well as during planning. */
+@media (max-width: 640px) {
+    .block-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        padding-top: 1.1rem !important;
+    }
+    [data-testid="stButton"] button,
+    [data-testid="stLinkButton"] a,
+    [data-testid="stDownloadButton"] button {
+        min-height: 44px;
+    }
+    [data-testid="stMarkdownContainer"] a {
+        overflow-wrap: anywhere;
+    }
+    [data-baseweb="tab-list"] {
+        overflow-x: auto;
+    }
+}
+
 * {
     box-sizing: border-box;
 }
@@ -83,6 +103,13 @@ label,
 [data-testid="stMarkdownContainer"] {
     color: var(--aw-ink);
     font-family: var(--aw-font);
+}
+
+/* Plain-text notes and share previews use Streamlit's separate text element. */
+[data-testid="stText"],
+[data-testid="stText"] > * {
+    color: var(--aw-ink) !important;
+    overflow-wrap: anywhere;
 }
 
 h1,
@@ -547,6 +574,7 @@ hr {
 }
 
 div.stButton > button,
+[data-testid="stLinkButton"] a,
 button[data-testid="stBaseButton-secondary"],
 button[data-testid="stBaseButton-primary"] {
     min-height: 44px;
@@ -560,7 +588,8 @@ button[data-testid="stBaseButton-primary"] {
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-div.stButton > button:hover {
+div.stButton > button:hover,
+[data-testid="stLinkButton"] a:hover {
     border-color: rgba(104, 225, 253, 0.65);
     color: white;
     box-shadow: 0 0 0 3px rgba(104, 225, 253, 0.07), 0 12px 30px rgba(0, 0, 0, 0.22);

@@ -9,7 +9,7 @@ from components.ui import render_section_header
 from utils import ali_ai
 
 
-def render_plan(route_planner, amap_key: str, dashscope_key: str) -> None:
+def render_plan(route_planner, amap_key: str, dashscope_key: str, catalog=None) -> None:
     st.markdown(
         render_section_header(tr("plan_title"), tr("plan_kicker"), tr("plan_help")),
         unsafe_allow_html=True,
@@ -20,6 +20,17 @@ def render_plan(route_planner, amap_key: str, dashscope_key: str) -> None:
         st.info(tr("plan_empty"))
         return
 
+    if catalog is not None:
+        from core.pilot import normalize_legacy_points
+        current = normalize_legacy_points(st.session_state["itinerary"], catalog)
+        if current != st.session_state["itinerary"]:
+            st.session_state["itinerary"] = current
+            st.session_state["planned_routes"] = None
+            st.caption("地点资料已更新，请按当前资料重新生成预览。")
+        if any(p.get("withdrawn") or (p.get("access") or {}).get("status") in {"closed", "prohibited"} for p in current):
+            _render_itinerary()
+            st.warning("背包含已撤下、关闭或禁止进入的地点，请先移除；不再显示旧路线预览。")
+            return
     _render_itinerary()
     start_addr = st.text_input(tr("start"), placeholder=tr("start_placeholder"))
 

@@ -10,9 +10,10 @@ from components.state import (
 )
 from components.ui import render_anime_card, render_section_header
 from utils import amap
+from core.pilot import normalize_legacy_points
 
 
-def render_discover(agent, retriever, amap_key: str, dashscope_key: str) -> None:
+def render_discover(agent, retriever, amap_key: str, dashscope_key: str, catalog=None) -> None:
     st.markdown(
         render_section_header(
             tr("discover_title"),
@@ -42,14 +43,14 @@ def render_discover(agent, retriever, amap_key: str, dashscope_key: str) -> None
     prompt = st.chat_input(tr("chat_placeholder"))
     if prompt:
         with st.spinner(tr("searching")):
-            _handle_prompt(prompt, agent, dashscope_key)
+            _handle_prompt(prompt, agent, dashscope_key, catalog)
         st.rerun()
 
-    _render_candidates(retriever)
-    _render_search_results(amap_key)
+    _render_candidates(retriever, catalog)
+    _render_search_results(amap_key, catalog)
 
 
-def _handle_prompt(prompt: str, agent, dashscope_key: str) -> None:
+def _handle_prompt(prompt: str, agent, dashscope_key: str, catalog=None) -> None:
     history = [
         {"role": message.get("role", "user"), "content": message.get("content", "")}
         for message in st.session_state["messages"]
@@ -68,7 +69,7 @@ def _handle_prompt(prompt: str, agent, dashscope_key: str) -> None:
         _apply_candidates(candidates, is_recommendation=False, query=query)
         content = tr("candidates_found", count=len(candidates))
     elif mode == "search_spots":
-        spots = result.get("spots", [])
+        spots = normalize_legacy_points(result.get("spots", []), catalog)
         st.session_state["search_candidates"] = []
         st.session_state["search_results"] = spots
         st.session_state["current_anime"] = f"地点/主题搜索：{query}"
@@ -169,7 +170,7 @@ def _apply_candidates(candidates: list[dict], is_recommendation: bool, query: st
     st.session_state["last_rec_query"] = query
 
 
-def _render_candidates(retriever) -> None:
+def _render_candidates(retriever, catalog=None) -> None:
     if not st.session_state.get("search_candidates") or st.session_state.get("search_results"):
         return
 
@@ -189,7 +190,7 @@ def _render_candidates(retriever) -> None:
                 use_container_width=True,
             ):
                 with st.status(tr("loading_spots", name=candidate["cn"])):
-                    raw_points = retriever.get_spots_by_anime_id(candidate["id"])
+                    raw_points = normalize_legacy_points(retriever.get_spots_by_anime_id(candidate["id"]), catalog)
                     if raw_points:
                         st.session_state["search_results"] = [
                             {
@@ -207,7 +208,10 @@ def _render_candidates(retriever) -> None:
                         st.error(tr("no_spots"))
 
 
-def _render_search_results(amap_key: str) -> None:
+def _render_search_results(amap_key: str, catalog=None) -> None:
+    if catalog is not None:
+        st.session_state["search_results"] = [p for p in normalize_legacy_points(st.session_state.get("search_results", []), catalog)
+            if not p.get("withdrawn") and (p.get("access") or {}).get("status") not in {"closed", "prohibited"}]
     if not st.session_state["search_results"]:
         return
 

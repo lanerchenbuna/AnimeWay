@@ -23,6 +23,7 @@ venv/
 .streamlit/
 
 # Runtime data
+.animeway/
 .cache/
 *.sqlite3
 *.sqlite3-shm
@@ -30,3 +31,15 @@ venv/
 !knowledge_base/animeway.sqlite3
 evaluation/feedback_log.jsonl
 evaluation/bad_cases.jsonl
+
+# Local planning, research notes and generated acceptance evidence
+/docs/product-development-plan.md
+/docs/project-review-optimization-plan.md
+/docs/pilot/
+/docs/step2/
+/docs/step3-4/
+/knowledge_base/pilot/review-ledger.json
+/knowledge_base/expansion/
+/artifacts/
+/test-results/
+/playwright-report/
