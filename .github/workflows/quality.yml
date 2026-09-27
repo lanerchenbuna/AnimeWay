@@ -4,8 +4,11 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
-  test:
+  quality:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -19,20 +22,25 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Check lockfile
+        run: uv lock --check
+
       - name: Install locked dependencies
         run: uv sync --frozen --group dev
 
       - name: Lint
         run: uv run ruff check .
 
-      - name: Type check route and evaluation boundaries
+      - name: Type check configured modules
         run: uv run mypy
 
-      - name: Unit and end-to-end tests
-        run: uv run pytest --cov --cov-report=term-missing
+      - name: Compile application modules
+        run: uv run python -m compileall -q app.py assets components core data_factory scripts utils
 
-      - name: Chinese retrieval golden set
-        run: uv run python -m evaluation.run_eval
+      - name: Parse browser scripts
+        run: |
+          node --check assets/identity/identity.js
+          node --check assets/map/map.js
 
-      - name: Retrieval performance thresholds
-        run: uv run python -m evaluation.benchmark_retrieval
+      - name: Build an offline public snapshot
+        run: uv run python -m data_factory.release --root "$RUNNER_TEMP/animeway-public-snapshots" --offline

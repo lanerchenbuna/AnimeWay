@@ -56,6 +56,9 @@ def _name(item: dict) -> str:
 
 
 def _item(catalog: dict, collection: str, item_id: object) -> dict | None:
+    if collection == "locations":
+        from core.place_links import places
+        return places(catalog).get(str(item_id))
     return next((item for item in catalog.get(collection, []) if str(item["id"]) == str(item_id)), None)
 
 
@@ -228,7 +231,7 @@ def _navigation(location: dict) -> None:
     except (KeyError, TypeError, ValueError):
         st.caption(ptext("unknown"))
         return
-    st.link_button(ptext("navigate"), url, use_container_width=True)
+    st.link_button(ptext("navigate"), url, width="stretch")
     st.caption(ptext("copy_location"))
     st.code(f"{location['name']}\n{location.get('city', '')}\n{float(location['lat']):.6f}, {float(location['lon']):.6f}", language=None)
 
@@ -262,9 +265,8 @@ def _scene(scene: dict, catalog: dict, *, link_place: bool = False) -> None:
         st.caption(ptext("real_photo" if media_type in {"real", "real_photo", "photo"} else "scene_reference" if media_type in {"anime", "anime_frame", "screenshot", "reference"} else "unclassified_media"))
         media_url = _valid_url(item.get("url"))
         if item.get("display_allowed") is True and media_url:
-            # The text and provenance are always present even if the remote image fails.
             try:
-                st.image(media_url, caption=item.get("attribution") or None, use_container_width=True)
+                st.image(media_url, caption=item.get("attribution"), width="stretch")
             except (ValueError, OSError):
                 st.caption(ptext("media_missing"))
         else:
@@ -469,6 +471,10 @@ def _location_page(catalog: dict, store, token, location_id: str) -> None:
     st.caption(location.get("city", ""))
     _level(location)
     _wishlist_button(store, token, location, "detail")
+    import os
+    if os.getenv("ANIMEWAY_MAP_ENABLED", "1").lower() not in {"0", "false", "off"} and st.button("在地图中安排 Trip／记录", key="aw_location_map_trip"):
+        from components.map_trip import open_map
+        open_map(location_id)
     st.subheader(ptext("access"))
     if _forbidden(location) or (location.get("access") or {}).get("status") == "restricted":
         st.warning(ptext("access_restricted"))
@@ -584,9 +590,10 @@ def _unknowns(items: list) -> None:
 def _connection_notes(item: dict) -> None:
     status = item.get("connection_status", "unknown")
     st.warning(ptext("recheck" if status == "needs_recheck" else "connections_reference" if status == "reference_only" else "connections_unknown"))
-    if status != "needs_recheck":
-        for note in item.get("reference_notes", []):
-            st.write(note)
+    if status == "needs_recheck" and item.get("reference_notes"):
+        st.caption("以下为保存时的历史参考，当前连接需重新核查。")
+    for note in item.get("reference_notes", []):
+        st.write(note)
 
 
 def _trips_page(catalog: dict, store, token) -> None:
@@ -605,12 +612,15 @@ def _trips_page(catalog: dict, store, token) -> None:
 
 def export_checklist(trip: dict, catalog: dict, *, locale: str | None = None) -> str:
     """Explicit textual projection: no images, identity tokens, keys or hidden fields."""
+    from core.place_links import trip_view
+    trip = trip_view(trip, catalog)
     def tr(key, **params):
         return ptext(key, locale=locale, **params)
     lines = [trip["title"], tr("personal_copy"), "", tr("offline_help"), "",
              tr("recheck" if trip.get("connection_status") == "needs_recheck" else "connections_reference" if trip.get("connection_status") == "reference_only" else "connections_unknown"), ""]
-    if trip.get("connection_status") != "needs_recheck":
-        lines.extend(trip.get("reference_notes", []))
+    if trip.get("connection_status") == "needs_recheck" and trip.get("reference_notes"):
+        lines.append("以下为保存时的历史参考，当前连接需重新核查。")
+    lines.extend(trip.get("reference_notes", []))
     for number, stop in enumerate(trip["stops"], 1):
         live = _item(catalog, "locations", stop["id"]) or {}
         access = live.get("access") or stop.get("access") or {}
@@ -636,10 +646,13 @@ def export_checklist(trip: dict, catalog: dict, *, locale: str | None = None) ->
             scene = _item(catalog, "scenes", scene_id)
             if scene:
                 lines.append(scene.get("title", ""))
-                lines.append(tr("unknown_episode") if not scene.get("episode") else f"{tr('episode')}: {scene['episode']}")
+                lines.append(tr("unknown_episode") if scene.get("episode") is None else f"{tr('episode')}: {scene['episode']}")
                 if _valid_url(scene.get("source_url")):
                     lines.append(scene["source_url"])
-        lines.extend([f"{float(stop['lat']):.6f}, {float(stop['lon']):.6f}",
+        coordinate = f"{float(stop['lat']):.6f}, {float(stop['lon']):.6f}"
+        if stop.get("missing"):
+            coordinate = f"{tr('historical_coordinate')}: {coordinate}"
+        lines.extend([coordinate,
                       tr("navigation_suspended") if _forbidden(live or stop) else navigation_url(stop), ""])
     lines.extend([tr("unknowns"), *[str(item) for item in trip.get("unknowns", [])]])
     return "\n".join(lines)
@@ -650,6 +663,8 @@ def _trip_page(catalog: dict, store, token, trip_id: str) -> None:
     if not trip:
         st.warning(ptext("not_found"))
         return
+    from core.place_links import trip_view, blocked
+    trip = trip_view(trip, catalog)
     st.title(trip["title"])
     st.caption(ptext("personal_copy"))
     if hasattr(store, "create_personal_trip") and st.button(ptext("convert_trip"), key=f"aw_convert_{trip_id}"):
@@ -682,6 +697,10 @@ def _trip_page(catalog: dict, store, token, trip_id: str) -> None:
             st.rerun()
     st.subheader(ptext("today"))
     _connection_notes(trip)
+    if st.checkbox("查看当前地点地图", key="aw_trip_live_map"):
+        points = [{"lat": s["lat"], "lon": s["lon"]} for s in trip["stops"] if not blocked(s)]
+        if points:
+            st.map(points)
     for index, stop in enumerate(trip["stops"], 1):
         live = _item(catalog, "locations", stop["id"])
         with st.container(border=True):
@@ -690,7 +709,7 @@ def _trip_page(catalog: dict, store, token, trip_id: str) -> None:
             st.write(stop.get("reason", ""))
             _stay(stop)
             st.write(_access_text(live or stop))
-            if live and str(live.get("source_version", "")) != str(stop.get("source_version", "")):
+            if stop.get("facts_changed"):
                 st.info(ptext("content_updated"))
             if live and _forbidden(live):
                 st.warning(ptext("access_restricted"))
@@ -704,7 +723,7 @@ def _trip_page(catalog: dict, store, token, trip_id: str) -> None:
                 if scene and not (live or {}).get("withdrawn"):
                     with st.expander(scene.get("title") or ptext("scene_reference")):
                         _scene(scene, catalog)
-            _navigation({**stop, "access": (live or stop).get("access", {}), "withdrawn": (live or {}).get("withdrawn", False)})
+            _navigation(stop)
             if live and not live.get("withdrawn") and st.button(ptext("open_location"), key=f"aw_trip_location_{trip_id}_{stop['id']}"):
                 _go("location", stop["id"])
             if not stop.get("required", True) and st.button(ptext("remove_optional"), key=f"aw_remove_stop_{trip_id}_{stop['id']}"):
@@ -731,21 +750,27 @@ def _wishlist_page(catalog: dict, store, token) -> None:
     if not locations:
         st.info(ptext("wishlist_empty"))
     for saved in locations or []:
+        from core.place_links import resolve_saved
+        saved = resolve_saved(saved, catalog)
         live = _item(catalog, "locations", saved["id"])
         with st.container(border=True):
             st.markdown(f"**{saved['name']}**")
             st.caption(saved.get("city", ""))
-            if live and str(live.get("source_version", "")) != str(saved.get("source_version", "")):
+            if saved.get("facts_changed"):
                 st.info(ptext("content_updated"))
             _wishlist_button(store, token, saved, "wishlist")
             if live and not live.get("withdrawn"):
+                import os
+                if os.getenv("ANIMEWAY_MAP_ENABLED", "1").lower() not in {"0", "false", "off"} and st.button("在地图中安排 Trip／记录", key=f"aw_wishlist_map_{saved['id']}"):
+                    from components.map_trip import open_map
+                    open_map(saved['id'])
                 if st.button(ptext("open_location"), key=f"aw_wishlist_location_{saved['id']}"):
                     _go("location", saved["id"])
             else:
                 st.caption(ptext("level_basic"))
                 if live and _forbidden(live):
                     st.warning(ptext("access_restricted"))
-                _navigation(live or saved)
+                _navigation(saved)
 
 
 def _settings_page(catalog: dict, store, token) -> None:
@@ -758,11 +783,13 @@ def _settings_page(catalog: dict, store, token) -> None:
             st.download_button(ptext("backup_download"), raw.encode("utf-8"), file_name="animeway-private-backup.json",
                                mime="application/json", key="aw_backup_download")
     upload = st.file_uploader(ptext("backup_upload"), type=["json"], key="aw_backup_upload", disabled=not token)
-    if st.button(ptext("restore"), key="aw_restore", disabled=not token or upload is None):
+    from components.import_review import render_import_review
+    approved = render_import_review(store, token, upload, catalog)
+    if st.button(ptext("restore"), key="aw_restore", disabled=approved is None):
         def restore():
             if upload.size > 5 * 1024 * 1024:
                 raise ValueError("Backup too large")
-            return store.import_backup(token, upload.getvalue().decode("utf-8"))
+            return store.import_backup(token, approved)
         if _attempt(restore) is not None:
             st.success(ptext("restored"))
     st.subheader(ptext("corrections"))
@@ -807,15 +834,15 @@ def render_pilgrimage(store, token: str | None, catalog: dict | None = None, api
     nav = st.columns(5)
     for column, page in zip(nav, ("discover", "personal", "trips", "wishlist", "settings")):
         with column:
-            if st.button(ptext("backup" if page == "settings" else page), key=f"aw_nav_{page}", use_container_width=True):
+            if st.button(ptext("backup" if page == "settings" else page), key=f"aw_nav_{page}", width="stretch"):
                 _go(page)
     if hasattr(store, "entries"):
         left, right = st.columns(2)
         with left:
-            if st.button("我的巡礼记录", key="aw_nav_journal", use_container_width=True):
+            if st.button("我的巡礼记录", key="aw_nav_journal", width="stretch"):
                 _go("journal")
         with right:
-            if st.button("下一次巡礼", key="aw_nav_rediscovery", use_container_width=True):
+            if st.button("下一次巡礼", key="aw_nav_rediscovery", width="stretch"):
                 _go("rediscovery")
     if not token:
         st.info(ptext("identity_pending"))

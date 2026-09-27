@@ -9,6 +9,7 @@ import time
 import streamlit as st
 
 from core import contributions as c
+from core.place_links import places
 from core.journal import encode_photo, share_card_svg, today
 from core.private_store import _now
 from components.trip_planner import _attempt
@@ -21,7 +22,7 @@ def photo_inline(data, *, label="个人照片"):
 
 
 def _place_names(catalog):
-    return {p["id"]: p["name"] for p in catalog["locations"]}
+    return {key: p["name"] for key, p in places(catalog).items()}
 
 
 def _ai_budget(store, token):
@@ -36,6 +37,9 @@ def render_journal(store, token, catalog, api_key=""):
     if not token:
         st.info("请等待匿名身份连接后保存记录。")
         return
+    pending = st.session_state.pop("awj_pending_entry", None)
+    if pending and any(e["id"] == pending for e in store.entries(token)):
+        st.session_state.update(awj_mode="照片与短文", awj_edit_entry=pending)
     mode = st.radio("记录工作区", ["足迹", "照片与短文", "分享", "贡献", "记录备份"], horizontal=True, key="awj_mode")
     if mode == "足迹":
         _footprints(store, token, catalog)
@@ -46,7 +50,7 @@ def render_journal(store, token, catalog, api_key=""):
     elif mode == "贡献":
         render_contributions(store, token, catalog)
     else:
-        _backup(store, token)
+        _backup(store, token, catalog)
 
 
 def _footprints(store, token, catalog):
@@ -82,8 +86,8 @@ def _footprints(store, token, catalog):
     skipped = {e["location_id"] for t in trips for e in t["events"] if e["kind"] == "skip"}
     st.write(f"确认到访 {len(confirmed)} 次 / {len({e['location_id'] for e in confirmed})} 个地点；Trip 中计划地点 {len(planned)} 个、明确跳过 {len(skipped)} 个（口径独立）。")
     if confirmed and st.checkbox("查看个人足迹地图", key="awj_map"):
-        places = {p["id"]: p for p in catalog["locations"]}
-        rows = [{"lat": places[e["location_id"]]["lat"], "lon": places[e["location_id"]]["lon"]} for e in confirmed if e["location_id"] in places]
+        live_places = places(catalog)
+        rows = [{"lat": live_places[e["location_id"]]["lat"], "lon": live_places[e["location_id"]]["lon"]} for e in confirmed if e["location_id"] in live_places and not live_places[e["location_id"]].get("withdrawn")]
         if rows:
             st.map(rows)
     for entry in sorted(entries, key=lambda e: e["date"], reverse=True):
@@ -175,8 +179,17 @@ def _photos_and_text(store, token, catalog, api_key):
             st.text(photo["caption"])
             st.write(scenes.get(photo["scene_id"], "原场景已失效，配对待核查"))
             linked = next((s for s in catalog["scenes"] if s["id"] == photo["scene_id"]), None)
-            if linked and linked.get("source_url"):
-                st.link_button("查看原作关联来源（不合成原作图）", linked["source_url"])
+            point = places(catalog).get(entry["location_id"])
+            media = (linked or {}).get("media") or {}
+            from data_factory.normalization import safe_url
+            url = safe_url(media.get("url") or media.get("reference_url"))
+            if linked and linked.get("location_id") == entry["location_id"] and not linked.get("upstream_removed") and point and not point.get("withdrawn") and media.get("display_allowed") and url:
+                if st.checkbox("查看获许可的场景图进行对照（不写入照片或分享）", key="awj_compare_" + photo["id"]):
+                    st.image(url, caption=media.get("attribution") or "场景来源")
+            else:
+                st.caption("场景图展示许可未确认或已失效；个人照片仍为独立私密记录。")
+            if linked and safe_url(linked.get("source_url")):
+                st.link_button("查看原作关联来源（不合成原作图）", safe_url(linked["source_url"]))
             with st.expander("调整照片使用范围"):
                 with st.form(f"awj_scope_{photo['id']}"):
                     rights = st.selectbox("使用权确认", ["private_only", "own"], index=0 if photo["rights"]=="private_only" else 1,
@@ -237,7 +250,7 @@ def _sharing(store, token, catalog):
                 base = os.getenv("ANIMEWAY_PUBLIC_URL", "").rstrip("/")
                 st.code(f"{base}/{relative}" if base else relative, language=None)
                 st.caption("未配置公开站点地址时显示相对链接；可打开后复制浏览器地址。公开站点请配置 ANIMEWAY_PUBLIC_URL。")
-                public = store.public_share(shared["id"])
+                public = store.public_share(shared["id"], catalog)
                 if public:
                     st.download_button("下载不含原作图的文字分享卡 SVG", share_card_svg(public), file_name="animeway-route-card.svg", mime="image/svg+xml", key=f"awj_card_{shared['id']}")
                 if st.button("撤下此分享", key=f"awj_revoke_{shared['id']}"):
@@ -249,7 +262,7 @@ def _sharing(store, token, catalog):
 
 def render_public_share(store, token, catalog, share_id):
     st.title("AnimeWay · 公开路线副本")
-    public = store.public_share(share_id) if store else None
+    public = store.public_share(share_id, catalog) if store else None
     if not public:
         st.warning("此分享不存在或已撤下")
         return
@@ -263,9 +276,22 @@ def render_public_share(store, token, catalog, share_id):
             st.write(f"{places.get(stop['location_id'], stop['name'])} · {'核心' if stop['required'] else '可选'} · 停留建议 {stop['stay_min']} 分钟")
     for data in public["photos"]:
         photo_inline(data, label="分享者明确公开的本人照片")
+    from core.place_links import places as current_places
+    copy_places = current_places(catalog)
+    rows = [{'id': s['location_id'], 'name': copy_places.get(s['location_id'], {}).get('name', s['name']),
+             'status': 'missing' if s['location_id'] not in copy_places else 'withdrawn' if copy_places[s['location_id']].get('withdrawn') else copy_places[s['location_id']].get('access', {}).get('status', 'unknown')}
+            for day in public['days'] for s in day['stops']]
+    st.subheader("复制预览：地点与访问状态")
+    st.dataframe(rows, hide_index=True, width="stretch")
     start = st.date_input("复制后我的开始日期（日本时间）", value=today(), key="awj_copy_date")
     st.caption("复制仅得到路线选择，起终点需你补全；不获取原用户日期、住宿、照片原档或私有记录。")
-    if st.button("复制为我的个人 Trip", disabled=not token, key="awj_copy_share"):
+    copy_preview = _attempt(lambda: store.preview_copy_share(share_id, start.isoformat(), catalog))
+    if copy_preview:
+        st.caption(copy_preview['check']['promise'])
+        for issue in copy_preview['check']['issues']:
+            st.warning(issue['message'])
+
+    if st.button("复制为我的个人 Trip", disabled=not token or copy_preview is None, key="awj_copy_share"):
         trip = _attempt(lambda: store.copy_share(token, share_id, start.isoformat(), catalog))
         if trip:
             st.query_params.clear()
@@ -312,13 +338,15 @@ def render_contributions(store, token, catalog):
                     st.rerun()
 
 
-def _backup(store, token):
+def _backup(store, token, catalog):
     st.caption("记录备份包含足迹、私人短文、压缩照片、配对与授权、关注及不感兴趣。Trip／收藏仍在「备份与反馈」单独备份。恢复照片默认私密，不恢复公开链接或统计同意。")
     raw = store.export_journal(token)
     st.download_button("下载记录与照片备份", raw.encode(), file_name="animeway-journal.json", mime="application/json", key="awj_backup")
     upload = st.file_uploader("恢复记录备份（最多 16 MiB）", type=["json"], key="awj_restore_file")
-    if st.button("合并恢复记录与照片", key="awj_restore", disabled=not upload):
-        count = _attempt(lambda: store.import_journal(token, upload.getvalue().decode()))
+    from components.import_review import render_import_review
+    approved = render_import_review(store, token, upload, catalog, journal=True)
+    if st.button("合并恢复记录与照片", key="awj_restore", disabled=approved is None):
+        count = _attempt(lambda: store.import_journal(token, approved))
         if count is not None:
             st.success(f"新增 {count} 条记录；相同文件重复恢复不会重复添加")
 

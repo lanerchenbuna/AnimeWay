@@ -124,7 +124,7 @@ def recommendations(catalog, preferences, wishlist, entries, *, limit=8):
     wanted = works | {a for p in wishlist for a in p.get("anime_ids", [])} | experienced
     result = []
     for point in catalog["locations"]:
-        if point["id"] in visited | set(preferences["dismissed"]) or point.get("withdrawn") or point["access"]["status"] in {"closed", "prohibited"}:
+        if point["id"] in visited | set(preferences["dismissed"]) or point.get("withdrawn") or point["access"]["status"] in {"closed", "prohibited", "forbidden", "no_entry"}:
             continue
         reason, score = [], 0
         if point["id"] in saved:
@@ -149,7 +149,7 @@ def public_projection(plan, catalog, *, title, text, photo_ids):
         stops = []
         for stop in day["stops"]:
             point = places.get(stop["location_id"])
-            if not point or point.get("withdrawn") or point["access"]["status"] in {"closed", "prohibited"}:
+            if not point or point.get("withdrawn") or point["access"]["status"] in {"closed", "prohibited", "forbidden", "no_entry"}:
                 raise ValueError("路线中有已撤下或不宜访问的地点，请先编辑个人 Trip")
             stops.append({"location_id": point["id"], "name": point["name"], "stay_min": stop["stay_min"],
                           "required": stop["priority"] == "required"})

@@ -18,7 +18,7 @@ def resolve_anchor(anchor: dict, catalog: dict) -> dict | None:
         return None
     if anchor.get("location_id"):
         point = next((p for p in catalog["locations"] if p["id"] == anchor["location_id"]), None)
-        return dict(point) if point and not point.get("withdrawn") and (point.get("access") or {}).get("status") not in {"closed", "prohibited"} else None
+        return dict(point) if point and not point.get("withdrawn") and (point.get("access") or {}).get("status") not in {"closed", "prohibited", "forbidden", "no_entry"} else None
     if anchor.get("lat") is None or anchor.get("lon") is None:
         return None
     return {"id": "manual", "name": anchor["name"], "lat": anchor["lat"], "lon": anchor["lon"]}

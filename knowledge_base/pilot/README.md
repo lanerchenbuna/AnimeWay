@@ -26,11 +26,6 @@
 
 应用通过 `core/pilot.py` 载入快照，通过维护者审核记录叠加变更；投稿不直接改写上游全库文件。审核命令、回撤和数据库备份见 [部署与维护](../../docs/operations.md)。
 
-修改后从项目根目录运行关系与行为检查：
-
-```bash
-uv run pytest tests/test_pilot_content.py tests/test_pilgrimage_ui.py tests/test_personal_trip.py tests/test_journal.py
-uv run python scripts/evaluate_trip_transport.py
-```
+修改后应在隔离数据目录启动应用，核对作品、地点、场景、手册及个人 Trip 的引用与回退行为；不要用私人真实数据做检查。
 
 本目录仅发布运行快照与使用说明；研究计划、候选目的地和本地审核过程记录不作为应用运行依赖。

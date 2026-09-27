@@ -1,36 +1,19 @@
-# 如何导入自定义数据
+# 公开索引的原始输入
 
-请将您准备好的 JSON 文件放置于此目录，并命名为 `anitabi_crawl.json` (或者修改 `data_factory/build_kb.py` 中的路径)。
+本目录保存应用离线构建公开索引所需的输入：
 
-## 推荐数据格式 (Expected Schema)
+| 文件 | 用途 |
+|---|---|
+| `bangumi_knowledge.json` | 作品元数据快照 |
+| `anitabi_crawl.json` | 已保存的作品点位记录，包含坐标、图片链接和城市 |
+| `crawl_state.json` | 各作品抓取状态，供后续显式刷新使用 |
 
-知识库构建管道预期的数据格式如下：
+仓库根目录的 `knowledge_base/index.json` 和 `knowledge_base/animeway.sqlite3` 是运行用旧版索引。构建新的成对快照时，从项目根目录运行：
 
-```json
-[
-  {
-    "anime_id": 32281,              // 必须: Bangumi ID 或自定义 ID
-    "name": "须贺神社前阶梯",         // 必须: 圣地名称
-    "geo": [35.6853, 139.7245],     // 必须: [纬度, 经度]
-    "city": "东京都",                // 可选: 城市
-    "tags": ["神社", "名场面"],      // 可选: 标签列表
-    "source_url": "https://...",     // 可选: 场景资料来源
-    "episode": "12",                 // 可选: 集数
-    "scene": "阶梯相遇场景",          // 可选: 场景说明
-    "verified_at": "2026-07-24"      // 可选: 核验日期
-  },
-  {
-    "anime_id": ...
-  }
-]
+```bash
+uv run python -m data_factory.release --root /tmp/animeway-public-snapshots --offline
 ```
 
-## 导入步骤
+该命令使用保存的输入，不会联网，也不表示内容已经更新。在线刷新先生成候选、人工核对，再发布；流程见 [部署与维护](../../docs/operations.md#公开地图快照刷新与回退)。请勿直接覆盖旧版 JSON 或 SQLite 文件。
 
-1. 放入 JSON 文件：`knowledge_base/raw/anitabi_crawl.json`
-2. 运行知识库构建管道：
-   ```bash
-   python -m data_factory.build_kb
-   ```
-3. 系统会自动清洗、校验并生成紧凑的 `knowledge_base/index.json` 与
-   SQLite/FTS 运行时索引 `knowledge_base/animeway.sqlite3`。
+作品元数据来源包括 [Bangumi](https://bgm.tv/)；点位来源包括 [Anitabi](https://anitabi.cn/)。[Anitabi 开放 API 文档](https://navi.anitabi.cn/docs/api/)要求遵循 CC BY-NC-SA 4.0，并要求场景截图保留 `origin` 文字与 `originURL` 链接。当前保存的旧版点位输入没有这两个字段，因此不能仅凭本目录数据确认每张截图的再发布权利。代码 MIT 许可不覆盖第三方数据与图片；公开复用这些文件前须单独核对来源条款、署名与素材权利。

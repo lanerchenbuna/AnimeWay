@@ -1,9 +1,9 @@
 import hashlib
 import json
 import os
-import re
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from data_factory.normalization import normalize_spot, stable_spot_id, extract_lat_lon  # noqa: F401
+from typing import Any, Dict, List
 
 try:
     from data_factory.schema import AnimeItem, Spot
@@ -54,52 +54,6 @@ def parse_score(value: Any) -> float | None:
         return None
 
 
-def stable_spot_id(anime_id: int, name: str, lat: float, lon: float) -> str:
-    source = f"{anime_id}:{name}:{lat:.6f}:{lon:.6f}"
-    return hashlib.sha1(source.encode("utf-8")).hexdigest()
-
-
-def extract_lat_lon(raw_spot: Dict[str, Any]) -> Tuple[float | None, float | None]:
-    geo = raw_spot.get("geo")
-    if isinstance(geo, list) and len(geo) == 2:
-        try:
-            return float(geo[0]), float(geo[1])
-        except (TypeError, ValueError):
-            return None, None
-
-    try:
-        lat = float(raw_spot.get("lat"))
-        lon = float(raw_spot.get("lon"))
-        return lat, lon
-    except (TypeError, ValueError):
-        return None, None
-
-
-def normalize_spot(raw_spot: Dict[str, Any], anime_id: int) -> Spot | None:
-    name = str(raw_spot.get("name") or raw_spot.get("cn") or "").strip()
-    lat, lon = extract_lat_lon(raw_spot)
-    if not name or lat is None or lon is None:
-        return None
-    if not (-90 <= lat <= 90 and -180 <= lon <= 180):
-        return None
-
-    spot_id = raw_spot.get("id") or stable_spot_id(anime_id, name, lat, lon)
-    return Spot(
-        id=str(spot_id),
-        name=name,
-        image=raw_spot.get("image") or raw_spot.get("img"),
-        lat=lat,
-        lon=lon,
-        description=raw_spot.get("description") or raw_spot.get("content"),
-        city=raw_spot.get("city") or raw_spot.get("_city"),
-        tags=normalize_tags(raw_spot.get("tags")),
-        source_url=raw_spot.get("source_url"),
-        episode=str(raw_spot.get("episode")) if raw_spot.get("episode") not in (None, "") else None,
-        scene=raw_spot.get("scene"),
-        verified_at=raw_spot.get("verified_at"),
-    )
-
-
 def build_rag_content(meta: Dict[str, Any], spots: List[Spot]) -> str:
     titles = meta.get("titles", {})
     parts = [
@@ -113,17 +67,19 @@ def build_rag_content(meta: Dict[str, Any], spots: List[Spot]) -> str:
     return " ".join(str(part) for part in parts if part).lower()
 
 
-def build_knowledge_base(write: bool = True) -> Dict[str, Any]:
+def build_knowledge_base(write: bool = True, *, raw_spots: list | None = None) -> Dict[str, Any]:
     raw_meta = []
     raw_meta.extend(load_json(MANUAL_FILE, []))
     raw_meta.extend(load_json(BANGUMI_FILE, []))
-    raw_spots = load_json(ANITABI_FILE, [])
+    raw_spots = load_json(ANITABI_FILE, []) if raw_spots is None else raw_spots
 
     spots_map: Dict[int, List[Spot]] = {}
     skipped_spots = 0
     duplicate_spots = 0
+    legacy_conflicts = 0
+    canonical_spots: dict[tuple[int, str], Spot] = {}
     seen_spot_ids: set[tuple[int, str]] = set()
-    seen_spot_semantics: set[tuple[int, str, float, float]] = set()
+    seen_records: dict[tuple[int, str], dict] = {}
     for raw_spot in raw_spots:
         try:
             anime_id = int(raw_spot.get("anime_id"))
@@ -136,17 +92,23 @@ def build_knowledge_base(write: bool = True) -> Dict[str, Any]:
             skipped_spots += 1
             continue
         id_key = (anime_id, spot.id)
-        semantic_key = (
-            anime_id,
-            re.sub(r"[^\w\u4e00-\u9fff\u3040-\u30ffー]+", "", spot.name.lower()),
-            round(spot.lat, 6),
-            round(spot.lon, 6),
-        )
-        if id_key in seen_spot_ids or semantic_key in seen_spot_semantics:
+        record = spot.model_dump(mode="json", exclude_none=True)
+        if id_key in seen_spot_ids:
+            if seen_records[id_key] != record:
+                if spot.identity_kind != "legacy_derived":
+                    raise ValueError(f"Conflicting source point: {id_key}")
+                # Old snapshots lack source IDs. Keep the existing canonical ID
+                # and every conflicting variant for explicit later reconciliation.
+                canonical = canonical_spots[id_key]
+                if record not in canonical.legacy_variants:
+                    canonical.legacy_variants.append(record)
+                canonical.normalization_issues = sorted(set(canonical.normalization_issues + ["legacy_identity_conflict"]))
+                legacy_conflicts += 1
             duplicate_spots += 1
             continue
         seen_spot_ids.add(id_key)
-        seen_spot_semantics.add(semantic_key)
+        seen_records[id_key] = record
+        canonical_spots[id_key] = spot
         spots_map.setdefault(anime_id, []).append(spot)
 
     items: List[Dict[str, Any]] = []
@@ -212,7 +174,7 @@ def build_knowledge_base(write: bool = True) -> Dict[str, Any]:
         },
     }
     stats = {
-        "schema_version": "2",
+        "schema_version": "3",
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "anime_count": len(items),
         "anime_with_spots": sum(1 for item in items if item["spots"]),
@@ -222,6 +184,7 @@ def build_knowledge_base(write: bool = True) -> Dict[str, Any]:
         "skipped_anime": skipped_anime,
         "skipped_spots": skipped_spots,
         "duplicate_spots": duplicate_spots,
+        "legacy_identity_conflicts": legacy_conflicts,
         "source_files": {
             "bangumi": BANGUMI_FILE,
             "manual": MANUAL_FILE if os.path.exists(MANUAL_FILE) else None,
@@ -232,19 +195,10 @@ def build_knowledge_base(write: bool = True) -> Dict[str, Any]:
     payload = {"stats": stats, "items": items}
 
     if write:
-        from data_factory.sqlite_index import build_runtime_index
+        from data_factory.release import publish_offline
 
-        runtime_index = build_runtime_index(
-            payload,
-            db_path=RUNTIME_INDEX_FILE,
-            source_metadata=source_metadata,
-        )
-        stats["runtime_index"] = runtime_index
-        os.makedirs(os.path.dirname(INDEX_FILE), exist_ok=True)
-        tmp_path = f"{INDEX_FILE}.tmp"
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
-        os.replace(tmp_path, INDEX_FILE)
+        selected = publish_offline(payload=payload, raw=raw_spots)
+        stats["runtime_index"] = {"path": selected["db_path"], "version": selected["version"]}
 
     return payload
 
@@ -253,7 +207,7 @@ def main() -> None:
     payload = build_knowledge_base(write=True)
     stats = payload["stats"]
     print("✅ Knowledge base built")
-    print(f"   Index: {INDEX_FILE}")
+    print(f"   Snapshot: {stats['runtime_index']['version']}")
     print(f"   Anime: {stats['anime_count']} ({stats['anime_with_spots']} with spots)")
     print(f"   Spots: {stats['spot_count']}")
     print(f"   Missing city: {stats['missing_city']}")

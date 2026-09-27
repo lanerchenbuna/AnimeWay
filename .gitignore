@@ -12,9 +12,12 @@ htmlcov/
 
 # Environment
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/
+/.secrets/
 
 # Mac
 .DS_Store
@@ -29,10 +32,8 @@ venv/
 *.sqlite3-shm
 *.sqlite3-wal
 !knowledge_base/animeway.sqlite3
-evaluation/feedback_log.jsonl
-evaluation/bad_cases.jsonl
 
-# Local planning, research notes and generated acceptance evidence
+# Local planning and generated output
 /docs/product-development-plan.md
 /docs/project-review-optimization-plan.md
 /docs/pilot/
@@ -40,6 +41,11 @@ evaluation/bad_cases.jsonl
 /docs/step3-4/
 /knowledge_base/pilot/review-ledger.json
 /knowledge_base/expansion/
+/knowledge_base/city_enrichment_report.json
+/knowledge_base/vector_cache/
 /artifacts/
 /test-results/
 /playwright-report/
+
+# Immutable public runtime snapshots (rebuild from reviewed sources)
+/knowledge_base/releases/

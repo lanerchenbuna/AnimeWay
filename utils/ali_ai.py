@@ -1,6 +1,6 @@
-from dashscope import Generation
 import json
 from urllib.parse import urlparse
+from core.qwen import chat as qwen_chat
 
 def get_image_embedding(image_path):
     return None
@@ -179,14 +179,7 @@ def generate_tour_guide_text(points, routes_data, api_key="", locale="zh_CN"):
 
     try:
         messages = [{'role': 'user', 'content': prompt}]
-        response = Generation.call(model="qwen-turbo", messages=messages, api_key=api_key, temperature=0.3)
-        if response.status_code == 200:
-            return response.output.text
-        else:
-            return {
-                "en_US": f"AI generation failed (code: {getattr(response, 'code', 'unknown')}).",
-                "ja_JP": f"AI 生成に失敗しました（コード：{getattr(response, 'code', 'unknown')}）。",
-            }.get(locale, f"AI 生成失败（错误码：{getattr(response, 'code', 'unknown')}）。")
+        return qwen_chat(api_key, messages, temperature=0.3)
     except Exception:
         return {
             "en_US": "The AI request failed. Please try again later.",
@@ -211,12 +204,11 @@ def correct_anime_name(user_input, api_key=""):
 
     try:
         messages = [{'role': 'user', 'content': prompt}]
-        response = Generation.call(model="qwen-turbo", messages=messages, api_key=api_key)
-        if response.status_code == 200:
-            corrected = response.output.text.strip()
+        corrected = qwen_chat(api_key, messages)
+        if corrected:
             # Clean generic punctuation if AI gets chatty
             if "是" in corrected and len(corrected) > 10: 
-                 pass 
+                 pass
             else:
                  return corrected
         return user_input
@@ -250,9 +242,8 @@ def recommend_anime_list(count=6, context_query="", api_key=""):
 
     try:
         messages = [{'role': 'user', 'content': prompt}]
-        response = Generation.call(model="qwen-turbo", messages=messages, temperature=0.9, api_key=api_key)
-        if response.status_code == 200:
-            txt = response.output.text.strip()
+        txt = qwen_chat(api_key, messages, temperature=0.9)
+        if txt:
             if txt.startswith("```"):
                 txt = txt.split("\n", 1)[1].rsplit("\n", 1)[0]
             if txt.startswith("json"):
@@ -287,9 +278,8 @@ def recommend_anime_by_city(city_name, api_key=""):
 
     try:
         messages = [{'role': 'user', 'content': prompt}]
-        response = Generation.call(model="qwen-turbo", messages=messages, api_key=api_key)
-        if response.status_code == 200:
-            txt = response.output.text.strip()
+        txt = qwen_chat(api_key, messages)
+        if txt:
             if txt.startswith("```"):
                 txt = txt.split("\n", 1)[1].rsplit("\n", 1)[0]
             if txt.startswith("json"):

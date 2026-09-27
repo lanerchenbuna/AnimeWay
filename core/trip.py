@@ -15,6 +15,7 @@ import re
 from zoneinfo import ZoneInfo
 
 from core.trip_transport import connection, resolve_anchor, stale
+from core.place_links import trip_eligible
 
 
 TOKYO = ZoneInfo("Asia/Tokyo")
@@ -178,7 +179,7 @@ def candidates(plan: dict, catalog: dict) -> list[dict]:
         value = sum(2 if scenes.get(sid, {}).get("featured") else 1 for sid in place.get("scene_ids", []))
         return (place["id"] not in req["must_ids"], place.get("content_level") == "basic", -value, place["id"])
     return sorted([p for p in catalog["locations"] if p["id"] not in excluded and wanted.intersection(p["anime_ids"])
-                   and not p.get("withdrawn") and (p.get("access") or {}).get("status") not in {"prohibited", "closed"}], key=score)
+                   and trip_eligible(p, catalog) and not p.get("withdrawn") and (p.get("access") or {}).get("status") not in {"prohibited", "closed", "forbidden", "no_entry"}], key=score)
 
 
 def stop_spec(location_id, *, required=False, pace="relaxed") -> dict:
@@ -265,7 +266,7 @@ def _evaluate_day(day, req, catalog, events):
         if ended:
             rows.append({"location_id": stop["location_id"], "outcome": "not_visited", "stop": stop})
             continue
-        if not point or point.get("withdrawn") or (point.get("access") or {}).get("status") in {"closed", "prohibited"}:
+        if not point or point.get("withdrawn") or (point.get("access") or {}).get("status") in {"closed", "prohibited", "forbidden", "no_entry"}:
             issues.append(_issue("access_blocked", "地点已撤下、关闭、禁止进入或不存在，请移除／替换；不能作为可进入场所推荐", severity="conflict", day=day["date"], location_id=stop["location_id"]))
         if point:
             districts.add(point.get("destination_id"))
@@ -374,6 +375,8 @@ def evaluate(plan: dict, catalog: dict, events=None, previous=None) -> dict:
         issues.append(_issue("excluded_selected", "安排中包含已标为不感兴趣的地点", severity="conflict"))
     places = {p["id"]: p for p in catalog["locations"]}
     for item in selected:
+        if item in places and not trip_eligible(places[item], catalog):
+            issues.append(_issue("unavailable_selected", "地点已不可访问或不在东京试点范围；保留历史选择，请重新核查", severity="conflict", location_id=item))
         if item in places and not set(req["anime_ids"]).intersection(places[item]["anime_ids"]):
             issues.append(_issue("unrelated_selected", "此站不关联当前所选作品；请手动移除、替换或调整作品选择", severity="conflict", location_id=item))
     return {"days": evaluated, "issues": issues, "status": "conflict" if any(i["severity"] == "conflict" for i in issues) else "draft",

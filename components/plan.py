@@ -34,7 +34,7 @@ def render_plan(route_planner, amap_key: str, dashscope_key: str, catalog=None) 
     _render_itinerary()
     start_addr = st.text_input(tr("start"), placeholder=tr("start_placeholder"))
 
-    if st.button(tr("generate"), type="primary", use_container_width=True):
+    if st.button(tr("generate"), type="primary", width="stretch"):
         _generate_plan(route_planner, start_addr, amap_key, dashscope_key, enable_tsp)
 
     plan = st.session_state.get("planned_routes")
@@ -266,7 +266,7 @@ def _render_album(points: list[dict]) -> None:
     cols = st.columns(len(images) if len(images) <= 4 else 4)
     for idx, image in enumerate(images[:4]):
         with cols[idx]:
-            st.image(image["src"], caption=image["name"], use_container_width=True)
+            st.image(image["src"], caption=image["name"], width="stretch")
 
 
 def _render_guide(plan: dict, dashscope_key: str) -> None:

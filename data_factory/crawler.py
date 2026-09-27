@@ -1,9 +1,8 @@
-import argparse
 import json
 import os
 import time
 import requests
-import hashlib
+from data_factory.normalization import normalize_spot, stable_spot_id, extract_lat_lon  # noqa: F401
 from datetime import datetime
 from typing import Any, List, Dict, Tuple
 
@@ -14,11 +13,64 @@ STATE_FILE = "knowledge_base/raw/crawl_state.json"
 # 🛠️ Fix: Use /points/detail endpoint for full data (lite is capped at 10)
 ANITABI_BASE_URL = "https://api.anitabi.cn/bangumi/{}/points/detail"
 ANITABI_LITE_URL = "https://api.anitabi.cn/bangumi/{}/lite"
-DELAY_SECONDS = 0.5  # Be polite to the API
+DELAY_SECONDS = 2.0  # Be polite to the API; bursts are what trigger its Cloudflare 403
 HEADERS = {'User-Agent': 'AnimePilgrimage/1.0'}
 MAX_HTTP_ATTEMPTS = 3
+MAX_BLOCKED_ATTEMPTS = 5
 MAX_STATE_RETRIES = 3
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+# Anitabi sits behind Cloudflare, which answers a request burst with HTTP 403 and then
+# clears. Observed 2026-09-27: the same URL returned 403 and, 92 seconds later with the
+# same client, a normal 200 JSON response. A 403 is a throttle to wait out, not a
+# permanent denial, so it is retried after a long cooldown. This stays inside upstream
+# limits: TLS verification is never disabled, no challenge is solved and no browser
+# fingerprint is forged.
+BLOCKED_STATUS_CODES = {403}
+BLOCKED_COOLDOWN_SECONDS = 60.0
+MAX_BLOCKED_COOLDOWN_SECONDS = 600.0
+
+
+def request_options() -> dict[str, Any]:
+    """Keep network settings explicit without weakening TLS verification."""
+    options: dict[str, Any] = {"timeout": (5, 20)}
+    proxy = os.getenv("ANIMEWAY_ANITABI_PROXY")
+    if proxy:
+        options["proxies"] = {"http": proxy, "https": proxy}
+    return options
+
+
+def failure_reason(exc: requests.RequestException) -> str:
+    """Avoid persisting request URLs or proxy credentials in candidate reports."""
+    return type(exc).__name__
+
+
+def response_reason(response: requests.Response) -> str:
+    return f"HTTP {response.status_code}"
+
+
+def blocked_cooldown() -> float:
+    """Cooldown between blocked attempts; ANIMEWAY_ANITABI_COOLDOWN overrides it."""
+    raw = os.getenv("ANIMEWAY_ANITABI_COOLDOWN")
+    if raw:
+        try:
+            value = float(raw)
+        except ValueError:
+            return BLOCKED_COOLDOWN_SECONDS
+        if 0 <= value <= MAX_BLOCKED_COOLDOWN_SECONDS:
+            return value
+    return BLOCKED_COOLDOWN_SECONDS
+
+
+def retry_after_seconds(response, default: float) -> float:
+    """Honour an upstream Retry-After header, capped; never trusts it blindly."""
+    raw = response.headers.get("Retry-After") if getattr(response, "headers", None) else None
+    try:
+        value = float(str(raw).strip())
+    except (TypeError, ValueError):
+        return default
+    if value < 0 or value > MAX_BLOCKED_COOLDOWN_SECONDS:
+        return default
+    return max(value, default)
 
 def load_bangumi_ids(filepath: str) -> List[Dict]:
     """Loads anime metadata from the user-provided JSON."""
@@ -49,44 +101,16 @@ def save_json_file(filepath: str, data: Any) -> None:
         json.dump(data, f, indent=2, ensure_ascii=False)
     os.replace(tmp_path, filepath)
 
-def stable_spot_id(anime_id: int, name: str, lat: float, lon: float) -> str:
-    source = f"{anime_id}:{name}:{lat:.6f}:{lon:.6f}"
-    return hashlib.sha1(source.encode("utf-8")).hexdigest()
-
-def extract_lat_lon(point: Dict) -> Tuple[float | None, float | None]:
-    geo = point.get("geo")
-    if isinstance(geo, list) and len(geo) == 2:
-        try:
-            return float(geo[0]), float(geo[1])
-        except (TypeError, ValueError):
-            return None, None
-    try:
-        return float(point.get("lat")), float(point.get("lon"))
-    except (TypeError, ValueError):
-        return None, None
-
 def normalize_crawled_point(point: Dict, anime_id: int, title: str, anime_city: str = "") -> Dict | None:
-    name = str(point.get("name") or point.get("cn") or "").strip()
-    lat, lon = extract_lat_lon(point)
-    if not name or lat is None or lon is None:
+    raw = dict(point)
+    raw["city"] = point.get("city") or anime_city
+    raw["tags"] = point.get("tags") or [title]
+    spot = normalize_spot(raw, anime_id)
+    if spot is None:
         return None
-
-    return {
-        "id": str(point.get("id") or stable_spot_id(anime_id, name, lat, lon)),
-        "anime_id": int(anime_id),
-        "name": name,
-        "geo": [lat, lon],
-        "lat": lat,
-        "lon": lon,
-        "image": point.get("image") or point.get("img"),
-        "city": point.get("city") or anime_city,
-        "description": point.get("description") or point.get("content"),
-        "tags": point.get("tags") or [title],
-        "source_url": point.get("source_url"),
-        "episode": point.get("episode"),
-        "scene": point.get("scene"),
-        "verified_at": point.get("verified_at"),
-    }
+    result = spot.model_dump(mode="json", exclude_none=True)
+    result.update(anime_id=int(anime_id), geo=[spot.lat, spot.lon])
+    return result
 
 def load_existing_points(filepath: str) -> Tuple[List[Dict], set[int]]:
     raw_points = load_json_file(filepath, [])
@@ -128,19 +152,38 @@ def update_state(state: Dict, subject_id: int, status: str, title: str, point_co
     }
 
 def request_with_backoff(url: str):
+    """Fetch one URL politely; TLS verification stays on and no body is logged.
+
+    Retryable statuses (429/5xx) back off briefly. A Cloudflare 403 gets a longer
+    allowance and an escalating cooldown, so a burst-limited refresh slows down and
+    eventually gives up instead of hammering or silently dropping the work.
+    """
     last_error = ""
-    for attempt in range(MAX_HTTP_ATTEMPTS):
+    response = None
+    cooldown = blocked_cooldown()
+    plain, blocked = 0, 0
+    while True:
         try:
-            response = requests.get(url, headers=HEADERS, timeout=5)
-            if response.status_code not in RETRYABLE_STATUS_CODES:
+            response = requests.get(url, headers=HEADERS, **request_options())
+            if response.status_code == 200:
                 return response, ""
-            last_error = f"HTTP {response.status_code}"
+            last_error = response_reason(response)
+            if response.status_code not in RETRYABLE_STATUS_CODES | BLOCKED_STATUS_CODES:
+                return response, last_error
         except requests.RequestException as exc:
             response = None
-            last_error = type(exc).__name__
-        if attempt < MAX_HTTP_ATTEMPTS - 1:
-            time.sleep(DELAY_SECONDS * (2 ** attempt))
-    return response, last_error
+            last_error = failure_reason(exc)
+        if response is not None and response.status_code in BLOCKED_STATUS_CODES:
+            blocked += 1
+            if blocked >= MAX_BLOCKED_ATTEMPTS:
+                return response, last_error
+            time.sleep(retry_after_seconds(response, cooldown))
+            cooldown = min(cooldown * 2, MAX_BLOCKED_COOLDOWN_SECONDS)
+        else:
+            plain += 1
+            if plain >= MAX_HTTP_ATTEMPTS:
+                return response, last_error
+            time.sleep(DELAY_SECONDS * (2 ** (plain - 1)))
 
 def fetch_anitabi_lite_city(subject_id: str) -> str:
     """Fetches the main city for the anime from the lite endpoint."""
@@ -181,146 +224,33 @@ def fetch_anitabi_points(subject_id: str) -> Tuple[str, List[Dict], str]:
         return "failed", [], str(e)
         
 def main(bootstrap_state_only: bool = False):
-    print("🚀 [Sync] Starting Anitabi Sync Job...")
-    
-    # 1. Load Data
+    """Refreshes use candidate bundles; bootstrap only initializes legacy state."""
+    if not bootstrap_state_only:
+        from data_factory.sync import main as sync_main
+        return sync_main()
     subjects = load_bangumi_ids(BANGUMI_FILE)
-    manual_subjects = load_bangumi_ids("knowledge_base/raw/manual_seeds.json")
-    if manual_subjects:
-        print(f"✅ Loaded {len(manual_subjects)} manual seeds.")
-        subjects.extend(manual_subjects)
-        
-    if not subjects:
-        return
-
-    # 2. Filter / Prioritize (Optional)
-    print("📊 Sorting subjects by popularity (votes)...")
-    subjects.sort(key=lambda x: int(x.get("votes", 0)) if str(x.get("votes", 0)).isdigit() else 0, reverse=True)
-    
-    top_subjects = subjects 
-         
-    print(f"🎯 Targeting ALL {len(top_subjects)} animes for crawl.")
-
-    crawled_points, completed_from_points = load_existing_points(OUTPUT_FILE)
-    state = load_json_file(STATE_FILE, {})
-    title_by_id = {}
-    for sub in top_subjects:
-        sid = sub.get("subject") or sub.get("id")
-        if not sid:
-            continue
-        try:
-            title_by_id[int(sid)] = sub.get("中文名") or sub.get("原名") or sub.get("name_cn") or "Unknown"
-        except (TypeError, ValueError):
-            continue
-
-    existing_counts: Dict[int, int] = {}
-    for point in crawled_points:
+    subjects.extend(load_bangumi_ids("knowledge_base/raw/manual_seeds.json"))
+    points, _ = load_existing_points(OUTPUT_FILE)
+    counts: Dict[int, int] = {}
+    for point in points:
         anime_id = int(point["anime_id"])
-        existing_counts[anime_id] = existing_counts.get(anime_id, 0) + 1
-    for anime_id, point_count in existing_counts.items():
-        if str(anime_id) not in state:
-            update_state(
-                state,
-                anime_id,
-                "success",
-                title_by_id.get(anime_id, "Existing crawl data"),
-                point_count=point_count,
-            )
-
-    pending_added = 0
-    for anime_id, title in title_by_id.items():
-        if str(anime_id) not in state:
-            update_state(state, anime_id, "pending", title, point_count=0)
-            pending_added += 1
-    if pending_added:
-        save_json_file(STATE_FILE, state)
-        print(f"🧾 Added {pending_added} pending anime IDs to the crawl state.")
-    if bootstrap_state_only:
-        print(f"✅ State bootstrap complete: {len(state)} tracked anime IDs.")
-        return
-
-    completed_from_state = {
-        int(k)
-        for k, v in state.items()
-        if str(v.get("status")) in {"success", "no_spots", "not_found"} and str(k).isdigit()
-    }
-    completed_ids = completed_from_points | completed_from_state
-    print(f"♻️ Loaded {len(crawled_points)} existing points; {len(completed_ids)} anime IDs already completed.")
-    
-    for i, sub in enumerate(top_subjects):
-        sid = sub.get("subject") or sub.get("id")
-        title = sub.get("中文名") or sub.get("原名") or sub.get("name_cn") or "Unknown"
-        if not sid:
-            continue
+        counts[anime_id] = counts.get(anime_id, 0) + 1
+    state = load_json_file(STATE_FILE, {})
+    for subject in subjects:
         try:
-            sid_int = int(sid)
-        except (TypeError, ValueError):
-            print(f"[{i+1}/{len(top_subjects)}] Skipping invalid subject ID: {sid}")
+            anime_id = int(subject.get("subject") or subject.get("id"))
+        except (ValueError, TypeError):
             continue
-
-        if sid_int in completed_ids:
-            print(f"[{i+1}/{len(top_subjects)}] Skipping completed: {title} (ID: {sid_int})")
-            continue
-        previous_state = state.get(str(sid_int), {})
-        if previous_state.get("status") == "failed" and int(previous_state.get("retries", 0)) >= MAX_STATE_RETRIES:
-            print(
-                f"[{i+1}/{len(top_subjects)}] Skipping retry limit: "
-                f"{title} (ID: {sid_int}, retries: {previous_state.get('retries')})"
-            )
-            continue
-        
-        print(f"[{i+1}/{len(top_subjects)}] Checking: {title} (ID: {sid_int})...", end="", flush=True)
-        
-        # API returns a List[Dict] for /points/detail
-        status, data, error = fetch_anitabi_points(str(sid_int))
-        
-        # Check if we got valid data (List of spots)
-        if status == "success" and data:
-            points = data
-            anime_city = fetch_anitabi_lite_city(str(sid_int)) 
-            
-            print(f" ✅ Found {len(points)} spots (Full). City: {anime_city}")
-            added_count = 0
-            for p in points:
-                normalized = normalize_crawled_point(p, sid_int, title, anime_city)
-                if normalized:
-                    crawled_points.append(normalized)
-                    added_count += 1
-            update_state(state, sid_int, "success", title, point_count=added_count)
-            completed_ids.add(sid_int)
-        elif status == "success":
-            print(" ⚪ No spots")
-            update_state(state, sid_int, "no_spots", title, point_count=0)
-            completed_ids.add(sid_int)
-        elif status == "not_found":
-            print(" ⚪ 404")
-            update_state(state, sid_int, "not_found", title, point_count=0, error=error)
-            completed_ids.add(sid_int)
-        else:
-            print(" ❌ Failed")
-            update_state(state, sid_int, "failed", title, point_count=0, error=error)
-            
-        time.sleep(DELAY_SECONDS)
-        
-        # Incremental Save every 50 items
-        if (i + 1) % 25 == 0:
-            print(f"\n💾 [Checkpoint] Saving {len(crawled_points)} spots so far...")
-            save_json_file(OUTPUT_FILE, crawled_points)
-            save_json_file(STATE_FILE, state)
-
-    # 3. Final Save
-    print(f"\n💾 Saving FINAL {len(crawled_points)} retrieved spots to {OUTPUT_FILE}...")
-    save_json_file(OUTPUT_FILE, crawled_points)
+        if str(anime_id) not in state:
+            title = subject.get("中文名") or subject.get("原名") or subject.get("name_cn") or "Unknown"
+            update_state(state, anime_id, "success" if anime_id in counts else "pending", title, counts.get(anime_id, 0))
     save_json_file(STATE_FILE, state)
-        
-    print("🎉 Sync Complete!")
+    print(f"State bootstrap complete: {len(state)} works; no network requests.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Incrementally sync Anitabi pilgrimage points.")
-    parser.add_argument(
-        "--bootstrap-state-only",
-        action="store_true",
-        help="Record pending/success states without making network requests.",
-    )
-    args = parser.parse_args()
-    main(bootstrap_state_only=args.bootstrap_state_only)
+    import sys
+    if sys.argv[1:] == ["--bootstrap-state-only"]:
+        main(bootstrap_state_only=True)
+    else:
+        from data_factory.sync import main as sync_main
+        sync_main()

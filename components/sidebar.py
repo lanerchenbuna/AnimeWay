@@ -31,43 +31,14 @@ def render_sidebar() -> tuple[str, str]:
             key="locale",
         )
 
-        st.markdown(
-            f"""
-<div class="bag-status">
-    <div class="bag-status__line">
-        <span>{tr("bag_count", count=len(st.session_state["itinerary"]), limit=MAX_ITINERARY_ITEMS)}</span>
-        <strong>{len(st.session_state["itinerary"]):02d}</strong>
-    </div>
-    <div class="bag-status__meter"><span style="width:{min(100, len(st.session_state["itinerary"]) / MAX_ITINERARY_ITEMS * 100):.0f}%"></span></div>
-</div>
-""",
-            unsafe_allow_html=True,
-        )
+        st.markdown(f"#### {tr('connect_title', locale=locale)}")
+        st.caption(tr("connect_help", locale=locale))
+        dashscope_key_input = st.text_input("DashScope / Qwen API Key", type="password", key="dashscope_key")
+        amap_key_input = st.text_input("高德 Web 服务 API Key", type="password", key="amap_key")
+        st.caption(tr("connect_note", locale=locale))
 
-        if st.session_state["itinerary"]:
-            for idx, item in enumerate(st.session_state["itinerary"], start=1):
-                name = html.escape(str(item.get("cn") or item.get("name") or "—"))
-                anime = html.escape(str(item.get("_anime_name") or tr("unknown_anime")))
-                st.markdown(
-                    f'<div class="bag-item"><b>{idx:02d}</b><span>{name}<small>{anime}</small></span></div>',
-                    unsafe_allow_html=True,
-                )
-            st.success(tr("bag_ready"))
-        else:
-            st.caption(tr("bag_empty"))
-
-        st.divider()
-        with st.expander(tr("service_keys"), expanded=False):
-            st.caption(tr("service_keys_help"))
-            amap_key = st.text_input(tr("amap_key"), type="password", key="amap_key")
-            dashscope_key = st.text_input(
-                tr("dashscope_key"),
-                type="password",
-                key="dashscope_key",
-            )
-
-        amap_key = amap_key.strip() if amap_key else ""
-        dashscope_key = str(dashscope_key).strip() if dashscope_key else ""
+        amap_key = amap_key_input.strip() if amap_key_input else ""
+        dashscope_key = str(dashscope_key_input).strip() if dashscope_key_input else ""
         if not amap_key:
             amap_key = os.getenv("AMAP_API_KEY", "").strip()
         if not dashscope_key:
@@ -75,9 +46,23 @@ def render_sidebar() -> tuple[str, str]:
         if os.getenv("DASHSCOPE_API_KEY") and not st.session_state.get("dashscope_key"):
             st.caption(tr("server_key"))
 
+        st.divider()
+        with st.expander(f"巡礼背包 · {len(st.session_state['itinerary'])}/{MAX_ITINERARY_ITEMS}", expanded=bool(st.session_state["itinerary"])):
+            if st.session_state["itinerary"]:
+                for idx, item in enumerate(st.session_state["itinerary"], start=1):
+                    name = html.escape(str(item.get("cn") or item.get("name") or "—"))
+                    anime = html.escape(str(item.get("_anime_name") or tr("unknown_anime")))
+                    st.markdown(
+                        f'<div class="bag-item"><b>{idx:02d}</b><span>{name}<small>{anime}</small></span></div>',
+                        unsafe_allow_html=True,
+                    )
+                st.success(tr("bag_ready"))
+            else:
+                st.caption(tr("bag_empty"))
+
         st.markdown(
             '<div class="sidebar-footer"><span class="signal-dot"></span>'
-            "LOCAL INDEX ONLINE<br><small>AnimeWay / 0.10 · Travel records</small></div>",
+            "ANIMEWAY · TOKYO PILOT<br><small>作品 · 地点 · 路书 · 记录</small></div>",
             unsafe_allow_html=True,
         )
 

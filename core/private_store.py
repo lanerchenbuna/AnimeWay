@@ -513,7 +513,7 @@ class PrivateStore:
             personal = [validate_archive(json.loads(row["body"])) for row in conn.execute("SELECT body FROM personal_trips WHERE owner=? ORDER BY trip_id", (owner,))]
             return _json({"schema_version": BACKUP_VERSION, "wishlist": wishlist, "trips": trips, "personal_trips": personal})
 
-    def import_backup(self, token: str, raw: str) -> dict:
+    def import_backup(self, token: str, raw: str, *, preview: bool = False) -> dict:
         from core.trip import validate_archive
 
         with self._connection() as conn:
@@ -546,6 +546,9 @@ class PrivateStore:
             if personal:
                 digest_body["personal_trips"] = sorted(personal, key=lambda item: item["id"])
             digest = hashlib.sha256(_json(digest_body).encode("utf-8")).hexdigest()
+            if preview:
+                return {"wishlist": wishlist, "trips": trips, "personal_trips": personal,
+                        "digest": digest, "already_imported": bool(conn.execute("SELECT 1 FROM backup_imports WHERE owner=? AND digest=?", (owner, digest)).fetchone())}
             conn.execute("BEGIN IMMEDIATE")
             if conn.execute("SELECT 1 FROM backup_imports WHERE owner=? AND digest=?", (owner, digest)).fetchone():
                 return {"wishlist_added": 0, "trips_added": 0, "already_imported": True}

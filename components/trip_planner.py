@@ -47,7 +47,7 @@ def _name(catalog, location_id):
 
 
 def _anchor_input(anchor, catalog, prefix, label):
-    places = {p["id"]: p["name"] for p in catalog["locations"] if not p.get("withdrawn") and (p.get("access") or {}).get("status") not in {"closed", "prohibited"}}
+    places = {p["id"]: p["name"] for p in catalog["locations"] if not p.get("withdrawn") and (p.get("access") or {}).get("status") not in {"closed", "prohibited", "forbidden", "no_entry"}}
     selected = anchor.get("location_id", "")
     if selected and selected not in places:
         places[selected] = "原起终点已失效，请重新选择"
@@ -169,7 +169,24 @@ def _new(store, token, catalog, api_key):
     if plan:
         st.session_state["awp_seed"] = plan
         st.session_state["awp_options"] = propose(plan, catalog)
-    for index, option in enumerate(st.session_state.get("awp_options", [])):
+        st.session_state.pop("awp_qwen_option", None)
+    qwen_ready = trip_ai.enabled(api_key) and bool(token)
+    st.caption("本地草案无需 Key。需要 AI 按你的条件编排站点时，在左侧填入 DashScope API Key；Qwen 只选择本地候选地点，不编造交通、费用或开放信息。")
+    if st.button("用 Qwen 生成路书草案", key="awp_generate_qwen", disabled=not qwen_ready):
+        try:
+            with st.spinner("正在让 Qwen 编排候选地点并检查草案…"):
+                option = trip_ai.request_itinerary(store, token, st.session_state["awp_seed"], catalog, api_key)
+            st.session_state["awp_qwen_option"] = option
+        except ValueError as exc:
+            st.error(str(exc))
+        st.rerun()
+    if not qwen_ready:
+        st.caption("填写左侧 DashScope Key 并启用本地身份后，即可生成 AI 路书；每个浏览器身份每日最多 3 次。")
+    options = list(st.session_state.get("awp_options", []))
+    qwen_option = st.session_state.get("awp_qwen_option")
+    if qwen_option:
+        options.append(qwen_option)
+    for index, option in enumerate(options):
         with st.container(border=True):
             st.subheader(option["label"])
             st.write(option["reason"])
@@ -255,7 +272,7 @@ def export_personal_checklist(archive, catalog):
             if point:
                 lines.extend([(point.get("access") or {}).get("summary", "访问状态未知"), point.get("entry", ""), point.get("viewpoint", ""), point.get("source_url", ""),
                               f"{point['lat']:.6f}, {point['lon']:.6f}"])
-                if not point.get("withdrawn") and (point.get("access") or {}).get("status") not in {"prohibited", "closed"} and row["outcome"] == "pending":
+                if not point.get("withdrawn") and (point.get("access") or {}).get("status") not in {"prohibited", "closed", "forbidden", "no_entry"} and row["outcome"] == "pending":
                     lines.append(navigation_url(point))
             if row.get("leg"):
                 lines.append(row["leg"]["reason"])
@@ -288,6 +305,17 @@ def _detail(store, token, catalog, api_key):
             if _attempt(lambda: store.begin_personal_trip(token, archive["id"], archive["revision"], catalog)):
                 st.rerun()
     places = {p["id"]: p for p in catalog["locations"]}
+    if st.checkbox("查看每日地点地图（当前坐标）", key="awp_live_map"):
+        from core.place_links import blocked
+        for day in plan["days"]:
+            rows = [{"lat": places[s["location_id"]]["lat"], "lon": places[s["location_id"]]["lon"]}
+                    for s in day["stops"] if not blocked(places.get(s["location_id"]))]
+            st.caption(day["date"] + " · 顺序与到访状态见当天清单")
+            if rows:
+                st.map(rows)
+    if hasattr(store, "entries") and st.button("管理到访记录与照片", key="awp_journal"):
+        from components.map_trip import open_handbook
+        open_handbook("journal", awj_mode="足迹", awj_import_trip=archive["id"])
     for day, check in zip(plan["days"], result["days"]):
         st.subheader(f"{day['date']} · {clock(day['start_min'])}—{clock(day['end_min'])}")
         st.write(f"{day['start']['name']} → {day['end']['name']}")
@@ -317,7 +345,7 @@ def _detail(store, token, catalog, api_key):
                         _navigation(point)
                         with st.expander("查看原作关联与到访依据"):
                             for scene in catalog["scenes"]:
-                                if scene["location_id"] == point["id"]:
+                                if scene["location_id"] == point["id"] and not point.get("withdrawn") and not scene.get("upstream_removed"):
                                     _scene(scene, catalog)
                     if archive["state"] != "ended":
                         _local_edit(store, token, archive, day, stop, catalog)
@@ -366,9 +394,9 @@ def _ai_editor(store, token, archive, catalog, api_key):
     with st.expander("可选 AI：提出局部修改，确认后应用"):
         policy = trip_ai.service_policy()
         usage = _attempt(lambda: store.ai_usage(token)) or {"calls": 0, "reserved_cny": 0}
-        st.caption(f"今日此浏览器 {usage['calls']} 次／预留预算 ¥{usage['reserved_cny']:.4f}。服务每日上限 {policy['daily_limit']} 次／¥{policy['budget_units']/1e6:.2f}；每次预留 ¥{policy['reserve_units']/1e6:.4f}。预留额不是实际账单。")
+        st.caption(f"今日此浏览器已调用 {usage['calls']} 次，个人上限 {policy['owner_limit']} 次；应用实例上限 {policy['daily_limit']} 次。此计数不是费用上限，实际账单由 DashScope 账号结算。")
         if not trip_ai.enabled(api_key):
-            st.info("未配置 AI Key 或服务预算，人工编辑与保存均可使用。")
+            st.info("填写 DashScope / Qwen Key 后可生成 AI 修改预览；人工编辑与保存不需要 Key。")
         text = st.text_area("例如：把第二天提前一小时结束，保留锁定站", key=f"awp_ai_text_{archive['id']}", max_chars=2000)
         st.caption("只发送当前站点选择、时间条件、候选名称和这段指令，不发送住宿坐标、身份凭据或完整历史。")
         if st.button("生成修改预览", key=f"awp_ai_request_{archive['id']}", disabled=not trip_ai.enabled(api_key)):

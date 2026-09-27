@@ -402,6 +402,156 @@ hr {
     font-size: 0.95rem;
 }
 
+/* Agent home: one clear entry point, with service state visible before typing. */
+.agent-intro {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 340px;
+    margin: 0.55rem 0 0;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 26px;
+    background: #172341;
+    isolation: isolate;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.24);
+}
+
+.agent-intro::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    content: "";
+    background-image:
+        linear-gradient(90deg, rgba(8, 13, 33, 0.97) 0%, rgba(8, 13, 33, 0.85) 38%, rgba(8, 13, 33, 0.2) 100%),
+        linear-gradient(0deg, rgba(8, 13, 33, 0.52), transparent 52%),
+        var(--agent-image);
+    background-position: center;
+    background-size: cover;
+}
+
+.agent-intro__content {
+    max-width: 690px;
+    padding: 2rem clamp(1.5rem, 5vw, 4rem);
+}
+
+.agent-intro__eyebrow {
+    color: #a9ecf7;
+    font-family: var(--aw-mono);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+}
+
+.agent-intro h1 {
+    max-width: 650px;
+    margin: 0.9rem 0 0.75rem;
+    color: #fff;
+    font-size: clamp(2.15rem, 4vw, 3.45rem);
+    font-weight: 850;
+    line-height: 1.18;
+    letter-spacing: -0.055em;
+    text-wrap: balance;
+}
+
+.agent-intro p {
+    max-width: 550px;
+    margin: 0;
+    color: #edf2ff;
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+.agent-intro__services {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-top: 1.55rem;
+}
+
+.agent-intro__services span {
+    padding: 0.42rem 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 100px;
+    color: #fff;
+    background: rgba(9, 16, 37, 0.7);
+    font-size: 0.77rem;
+    font-weight: 750;
+    backdrop-filter: blur(8px);
+}
+
+.agent-intro__services .is-ready::before,
+.agent-intro__services .is-pending::before {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 0.5rem;
+    border-radius: 50%;
+    content: "";
+    background: #6ce0aa;
+}
+
+.agent-intro__services .is-pending::before {
+    background: #ffc678;
+}
+
+.agent-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.7rem;
+    margin-top: 0.85rem;
+}
+
+.agent-steps > div {
+    display: flex;
+    gap: 0.85rem;
+    align-items: center;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--aw-line);
+    border-radius: 12px;
+    background: rgba(22, 30, 62, 0.9);
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.agent-steps b {
+    color: var(--aw-cyan);
+    font-family: var(--aw-mono);
+    font-size: 0.75rem;
+}
+
+.agent-key-hint {
+    margin: 0.8rem 0 1.7rem;
+    color: var(--aw-muted) !important;
+    font-size: 0.8rem;
+}
+
+.st-key-aw_agent_examples [data-testid="stButton"] button {
+    min-height: 54px;
+    justify-content: flex-start;
+    padding: 0.8rem 1rem;
+    border-radius: 14px;
+    text-align: left;
+}
+
+.st-key-example_routebook button {
+    border-color: rgba(255, 112, 166, 0.6) !important;
+    background: linear-gradient(110deg, rgba(122, 54, 108, 0.7), rgba(43, 43, 94, 0.85)) !important;
+}
+
+@media (max-width: 720px) {
+    .agent-intro { min-height: 370px; }
+    .agent-intro::before {
+        background-image:
+            linear-gradient(90deg, rgba(8, 13, 33, 0.92), rgba(8, 13, 33, 0.55)),
+            var(--agent-image);
+    }
+    .agent-intro__content { padding: 2rem 1.45rem; }
+    .agent-steps { gap: 0.35rem; }
+    .agent-steps > div { display: block; padding: 0.7rem 0.55rem; font-size: 0.72rem; }
+    .agent-steps b { display: block; margin-bottom: 0.22rem; }
+}
+
 /* ---------- Sidebar ---------- */
 [data-testid="stSidebar"] {
     border-right: 1px solid var(--aw-line);
@@ -574,6 +724,7 @@ hr {
 }
 
 div.stButton > button,
+div.stFormSubmitButton > button,
 [data-testid="stLinkButton"] a,
 button[data-testid="stBaseButton-secondary"],
 button[data-testid="stBaseButton-primary"] {
@@ -589,6 +740,7 @@ button[data-testid="stBaseButton-primary"] {
 }
 
 div.stButton > button:hover,
+div.stFormSubmitButton > button:hover,
 [data-testid="stLinkButton"] a:hover {
     border-color: rgba(104, 225, 253, 0.65);
     color: white;
@@ -696,6 +848,14 @@ a:focus-visible {
     background: rgba(14, 20, 47, 0.58);
 }
 
+/* Keep expanded/hovered controls readable with Streamlit's light defaults. */
+[data-testid="stExpander"] summary,
+[data-testid="stExpander"] summary:hover,
+[data-testid="stExpander"] summary:focus-visible {
+    background: rgba(26, 35, 70, 0.95) !important;
+    color: var(--aw-ink) !important;
+}
+
 [data-testid="stDeckGlJsonChart"] {
     overflow: hidden;
     border: 1px solid rgba(104, 225, 253, 0.2);
@@ -744,6 +904,34 @@ a:focus-visible {
     height: 100%;
     object-fit: cover;
     transition: transform 0.7s ease;
+}
+
+.spot-card__preview {
+    display: flex;
+    width: 100%;
+    min-height: 250px;
+    height: 100%;
+    align-items: flex-end;
+    padding: 1rem;
+    background-color: #192340;
+    background-position: center;
+    background-size: cover;
+}
+
+.spot-card__preview span {
+    position: relative;
+    z-index: 2;
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+    color: white;
+    background: rgba(8, 12, 29, 0.78);
+    font-size: 0.68rem;
+}
+
+.spot-card__source {
+    display: inline-block;
+    margin: 0.65rem 0 0 0.8rem;
+    font-size: 0.82rem;
 }
 
 .spot-card:hover .spot-card__media img {

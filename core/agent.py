@@ -1,10 +1,10 @@
 import json
 import os
 from typing import List, Dict, Any
-from dashscope import Generation
 from core.guide import GuideService
 from core.intent import IntentService
 from core.planner import AgentPlanner
+from core.qwen import QwenAPIError, chat as qwen_chat
 from core.retrieval import HybridRetriever
 from core.search import SearchService
 
@@ -22,7 +22,16 @@ class AnimeRagAgent:
             cache_dir = os.getenv("ANIMEWAY_RETRIEVAL_CACHE_DIR")
             self.retriever = HybridRetriever(self.knowledge_base, cache_dir=cache_dir)
         else:
-            runtime_index = os.getenv("ANIMEWAY_INDEX_DB", "knowledge_base/animeway.sqlite3")
+            snapshot_root = os.getenv("ANIMEWAY_SNAPSHOT_DIR")
+            explicit_index = os.getenv("ANIMEWAY_INDEX_DB")
+            if not snapshot_root and not explicit_index and os.path.exists("knowledge_base/releases/current.json"):
+                snapshot_root = "knowledge_base/releases"
+            if snapshot_root:
+                from core.public_snapshot import resolve_snapshot
+                self.public_snapshot = resolve_snapshot(snapshot_root)
+                runtime_index = self.public_snapshot["db_path"]
+            else:
+                runtime_index = explicit_index or "knowledge_base/animeway.sqlite3"
             if os.path.exists(runtime_index):
                 from core.sqlite_retrieval import SQLiteRetriever
 
@@ -105,13 +114,9 @@ class AnimeRagAgent:
                 ]
                 messages = safe_history + messages
             
-            resp = Generation.call(model="qwen-turbo", messages=messages, api_key=safe_key)
-            if resp.status_code == 200:
-                return resp.output.text
-            else:
-                return f"⚠️ DashScope 调用失败（错误码：{getattr(resp, 'code', 'unknown')}）。"
-        except Exception:
-            return "⚠️ DashScope 网络调用失败，请稍后重试。"
+            return qwen_chat(safe_key, messages)
+        except QwenAPIError as exc:
+            return f"⚠️ {exc}"
 
     def run(self, user_query: str, api_key: str = "", history: List[Dict] = None) -> Dict[str, Any]:
         """

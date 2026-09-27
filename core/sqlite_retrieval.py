@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from core.retrieval import HybridRetriever
-from data_factory.sqlite_index import SCHEMA_VERSION
+from data_factory.sqlite_index import SUPPORTED_SCHEMA_VERSIONS
+from data_factory.normalization import SPOT_DETAIL_FIELDS
 
 
 class SQLiteKnowledgeView(Sequence):
@@ -49,10 +50,10 @@ class SQLiteRetriever(HybridRetriever):
         if not os.path.exists(self.db_path):
             raise FileNotFoundError(self.db_path)
         self.metadata = self._load_metadata()
-        if str(self.metadata.get("schema_version")) != SCHEMA_VERSION:
+        if str(self.metadata.get("schema_version")) not in SUPPORTED_SCHEMA_VERSIONS:
             raise ValueError(
                 f"Unsupported runtime index schema: {self.metadata.get('schema_version')} "
-                f"(expected {SCHEMA_VERSION})"
+                f"(expected one of {sorted(SUPPORTED_SCHEMA_VERSIONS)})"
             )
         self.anime_count = int(self.metadata.get("anime_count", 0))
         self.spot_count = int(self.metadata.get("spot_count", 0))
@@ -373,6 +374,9 @@ class SQLiteRetriever(HybridRetriever):
             "_anime_name": row["anime_cn"] or row["anime_jp"] or "未知动画",
             "_city": row["city"] or "Unknown",
         }
+        if "details_json" in row.keys():
+            details = json.loads(row["details_json"] or "{}")
+            result.update({key: details[key] for key in SPOT_DETAIL_FIELDS if key in details})
         if score is not None:
             result["_score"] = round(score, 4)
         return result

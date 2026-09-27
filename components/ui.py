@@ -4,9 +4,10 @@ import base64
 import html
 from functools import lru_cache
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode, urlsplit
 
 from components.i18n import tr
+from data_factory.normalization import safe_url
 
 
 @lru_cache(maxsize=4)
@@ -58,6 +59,50 @@ def render_hero(locale: str = "zh_CN") -> str:
 """
 
 
+def render_agent_intro(*, qwen_ready: bool, amap_ready: bool, locale: str = "zh_CN") -> str:
+    """A compact first screen that explains the routebook workflow and service state."""
+    copy = {
+        "zh_CN": (
+            "东京精选 · 智能巡礼", "从喜欢的动画，走进真实的街道。",
+            "说出作品、日期和旅行节奏。AnimeWay 会找到有来源的圣地，安排每天的顺序，并给出可核查的路书。",
+            "提出想法", "查看地点与路线", "保存个人 Trip", "已连接", "待连接", "在左侧连接 Qwen 和高德，即可生成带在线路线的路书。",
+        ),
+        "en_US": (
+            "Tokyo pilot · Anime pilgrimage", "From a favorite story to a real journey.",
+            "Tell us the title, date and pace. AnimeWay finds sourced places and creates a routebook you can review.",
+            "Describe your trip", "Review places and routes", "Save your Trip", "Connected", "Connect a key", "Connect Qwen and AMap in the sidebar to create a routebook with live routes.",
+        ),
+        "ja_JP": (
+            "東京の聖地 · 巡礼プラン", "好きな物語から、実際の街へ。",
+            "作品、日付、旅のペースを伝えると、出典のある場所を探して確認できる旅程を作ります。",
+            "希望を伝える", "場所と経路を確認", "旅程を保存", "接続済み", "未接続", "左側で Qwen と高徳地図を接続すると、オンライン経路付きの旅程を作れます。",
+        ),
+    }
+    hero_uri = html.escape(_asset_data_uri("assets/images/animeway-hero.webp"), quote=True)
+    eyebrow, title, description, step_one, step_two, step_three, connected, missing, hint = copy.get(locale, copy["zh_CN"])
+    qwen_status = connected if qwen_ready else missing
+    amap_status = connected if amap_ready else missing
+    return f"""
+<section class="agent-intro" style="--agent-image: url('{hero_uri}')">
+  <div class="agent-intro__content">
+    <span class="agent-intro__eyebrow">ANIMEWAY / {html.escape(eyebrow)}</span>
+    <h1>{html.escape(title)}</h1>
+    <p>{html.escape(description)}</p>
+    <div class="agent-intro__services" aria-label="API 状态">
+      <span class="{'is-ready' if qwen_ready else 'is-pending'}">Qwen · {qwen_status}</span>
+      <span class="{'is-ready' if amap_ready else 'is-pending'}">高德路线 · {amap_status}</span>
+    </div>
+  </div>
+</section>
+<div class="agent-steps" aria-label="巡礼流程">
+  <div><b>01</b><span>{html.escape(step_one)}</span></div>
+  <div><b>02</b><span>{html.escape(step_two)}</span></div>
+  <div><b>03</b><span>{html.escape(step_three)}</span></div>
+</div>
+<p class="agent-key-hint">{html.escape(hint)}</p>
+"""
+
+
 def render_section_header(title: str, kicker: str, description: str) -> str:
     return f"""
 <header class="section-heading aw-reveal">
@@ -71,7 +116,7 @@ def render_section_header(title: str, kicker: str, description: str) -> str:
 def render_anime_card(spot: dict, locale: str = "zh_CN") -> str:
     """Render an escaped pilgrimage spot card."""
     raw_img = spot.get("image") or spot.get("img")
-    img_src = str(raw_img or "")
+    img_src = safe_url(raw_img) or ""
     if "plan=h" in img_src:
         img_src = img_src.replace("plan=h160", "plan=h360")
 
@@ -96,9 +141,11 @@ def render_anime_card(spot: dict, locale: str = "zh_CN") -> str:
     safe_description = html.escape(str(description), quote=True)
     safe_map_url = html.escape(map_url, quote=True)
     if img_src:
+        background_url = quote(img_src, safe=":/?&=%#;,@+-._~")
         media = (
-            f'<img src="{html.escape(img_src, quote=True)}" alt="{safe_name}" '
-            'loading="lazy" decoding="async">'
+            f'<div class="spot-card__preview" role="img" aria-label="{safe_name} 场景预览" '
+            f'style="background-image:url({background_url})">'
+            '<span>上游场景图 · 无法加载时请查看来源</span></div>'
         )
     else:
         media = """
@@ -127,6 +174,7 @@ def render_anime_card(spot: dict, locale: str = "zh_CN") -> str:
         <a href="{safe_map_url}" target="_blank" rel="noopener noreferrer" class="nav-btn">
             <span>↗</span> {tr("navigate", locale=locale)}
         </a>
+        {f'<a href="https://anitabi.cn/map?bangumiId={html.escape(str(spot.get("anime_id")), quote=True)}" target="_blank" rel="noopener noreferrer" class="spot-card__source">Anitabi 来源 ↗</a>' if img_src and urlsplit(img_src).hostname == "image.anitabi.cn" and str(spot.get("anime_id", "")).isdigit() else ""}
     </div>
 </article>
 """

@@ -1,11 +1,30 @@
+import os
 import requests
 from typing import Any
 from urllib.parse import urlencode
+from urllib.parse import urlsplit
 
 
 PROVIDER = "amap"
 API_VERSION = "v3"
 REQUEST_TIMEOUT_SECONDS = 5
+DOMESTIC_BASE = "https://restapi.amap.com"
+OVERSEAS_BASE = "https://sg-restapi.opnavi.com"
+
+
+def _route_base(*points) -> str:
+    """Use AMap's overseas route host for Japan coordinates (requires permission)."""
+    try:
+        coords = [(float(lon), float(lat)) for lon, lat in points]
+    except (TypeError, ValueError):
+        return DOMESTIC_BASE
+    if any(122 <= lon <= 154 and 20 <= lat <= 46.5 for lon, lat in coords):
+        configured = os.getenv("AMAP_OVERSEAS_API_BASE", OVERSEAS_BASE).rstrip("/")
+        host = (urlsplit(configured).hostname or "").lower()
+        if host not in {"sg-restapi.opnavi.com", "restapi.amap.com"}:
+            return OVERSEAS_BASE
+        return configured
+    return os.getenv("AMAP_API_BASE", DOMESTIC_BASE).rstrip("/")
 
 
 def _parse_polyline(value: Any) -> list[list[float]]:
@@ -113,7 +132,7 @@ def get_walking_route(origin_lon, origin_lat, dest_lon, dest_lat, key):
     """
     origin = f"{origin_lon},{origin_lat}"
     destination = f"{dest_lon},{dest_lat}"
-    url = "https://restapi.amap.com/v3/direction/walking"
+    url = f"{_route_base((origin_lon, origin_lat), (dest_lon, dest_lat))}/v3/direction/walking"
     params = {
         "origin": origin,
         "destination": destination,
@@ -168,7 +187,7 @@ def get_transit_route(
     if not city:
         city = "此地"
     
-    url = "https://restapi.amap.com/v3/direction/transit/integrated"
+    url = f"{_route_base((origin_lon, origin_lat), (dest_lon, dest_lat))}/v3/direction/transit/integrated"
     params = {
         "origin": origin,
         "destination": destination,
@@ -264,7 +283,7 @@ def get_driving_route(origin_lon, origin_lat, dest_lon, dest_lat, key):
     """
     origin = f"{origin_lon},{origin_lat}"
     destination = f"{dest_lon},{dest_lat}"
-    url = "https://restapi.amap.com/v3/direction/driving"
+    url = f"{_route_base((origin_lon, origin_lat), (dest_lon, dest_lat))}/v3/direction/driving"
     params = {
         "origin": origin,
         "destination": destination,

@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict
+from typing import Any, Literal, List, Optional, Dict
 from pydantic import BaseModel, Field, field_validator
 
 # --- Level 1: Geography (The "Where") ---
@@ -15,6 +15,16 @@ class Spot(BaseModel):
     episode: Optional[str] = None
     scene: Optional[str] = None
     verified_at: Optional[str] = None
+
+    identity_kind: Literal["upstream", "legacy_derived"] = "legacy_derived"
+    source_point_id: Optional[str] = None
+    timecode_seconds: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    origin: Optional[str] = None
+    origin_url: Optional[str] = None
+    group: Optional[str] = None
+    legacy_variants: List[Dict[str, Any]] = Field(default_factory=list)
+    source_raw: Dict[str, Any] = Field(default_factory=dict)
+    normalization_issues: List[str] = Field(default_factory=list)
 
     @field_validator('name')
     def normalize_name(cls, v):

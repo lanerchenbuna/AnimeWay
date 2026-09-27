@@ -6,6 +6,7 @@ from copy import deepcopy
 import hashlib
 import json
 import secrets
+import sqlite3
 import uuid
 
 from core.journal import (MAX_JOURNAL_BACKUP, clean_photo, encode_photo, public_projection,
@@ -13,6 +14,7 @@ from core.journal import (MAX_JOURNAL_BACKUP, clean_photo, encode_photo, public_
 from core.private_store import _identifier, _json, _now, _text
 from core.trip import _keys, empty_plan, new_requirements, stop_spec
 from core.trip_store import TripStore
+from core.place_links import places, blocked
 
 DEFAULT_PREFERENCES = {"follows": [], "dismissed": [], "measure_consent": False}
 
@@ -94,7 +96,7 @@ class JournalStore(TripStore):
 
     def save_entry(self, token, *, location_id, visited_on, confirmed, note="", short_text="", stay_min=None,
                    entry_id=None, revision=None, trip_id="", source_key="", catalog):
-        point = next((p for p in catalog["locations"] if p["id"] == location_id), None)
+        point = places(catalog).get(location_id)
         if not point:
             raise ValueError("请选择有稳定身份的地点")
         now = _now()
@@ -270,7 +272,7 @@ class JournalStore(TripStore):
             self._metric(conn, owner, "share_published", share_id)
         return share_id
 
-    def public_share(self, share_id):
+    def public_share(self, share_id, catalog=None):
         if not isinstance(share_id, str) or len(share_id) != 32:
             return None
         with self._connection() as conn:
@@ -278,6 +280,26 @@ class JournalStore(TripStore):
             if not row:
                 return None
             result = json.loads(row["body"])
+            from core.pilot import load_pilot
+            current = catalog if catalog is not None else self.catalog(load_pilot())
+            if catalog is None:
+                import os
+                from pathlib import Path
+                from core.map_query import MapQueryService
+                from core.place_links import current_catalog
+                root = os.getenv("ANIMEWAY_SNAPSHOT_DIR") or "knowledge_base/releases"
+                if os.getenv("ANIMEWAY_SNAPSHOT_DIR") or (Path(root) / "current.json").exists():
+                    try:
+                        service = MapQueryService.from_snapshot(root, lambda: self.catalog(load_pilot()))
+                        current = current_catalog(service, current)
+                    except (OSError, ValueError, sqlite3.Error, TypeError, KeyError):
+                        return None
+            current_places = places(current)
+            if any(blocked(current_places.get(s['location_id'])) for day in result['days'] for s in day['stops']):
+                return None
+            for day in result['days']:
+                for stop in day['stops']:
+                    stop['name'] = current_places[stop['location_id']]['name']
             photos = []
             for pid in result.pop("photo_ids"):
                 p = conn.execute("SELECT body,image,entry_id FROM journal_photos WHERE owner=? AND id=?", (row["owner"], pid)).fetchone()
@@ -298,19 +320,24 @@ class JournalStore(TripStore):
             if not conn.execute("UPDATE route_shares SET active=0 WHERE owner=? AND id=?", (owner, share_id)).rowcount:
                 raise ValueError("找不到此身份的分享")
 
-    def copy_share(self, token, share_id, start_date, catalog):
-        shared = self.public_share(share_id)
+    def preview_copy_share(self, share_id, start_date, catalog):
+        shared = self.public_share(share_id, catalog)
         if not shared:
             raise ValueError("分享不存在或已经撤下")
         places = {p["id"]: p for p in catalog["locations"]}
         ids = [s["location_id"] for d in shared["days"] for s in d["stops"]]
-        if any(i not in places or places[i].get("withdrawn") or places[i]["access"]["status"] in {"closed", "prohibited"} for i in ids):
+        if any(i not in places or places[i].get("withdrawn") or places[i]["access"]["status"] in {"closed", "prohibited", "forbidden", "no_entry"} for i in ids):
             raise ValueError("有地点已撤下或不宜访问，暂停复制；请按当前资料重新选择")
         works = list(dict.fromkeys(a for i in ids for a in places[i]["anime_ids"]))
         plan = empty_plan(new_requirements(start_date, len(shared["days"]), anime_ids=works, title=shared["title"]))
         for day, source in zip(plan["days"], shared["days"]):
             day["stops"] = [{**stop_spec(s["location_id"], required=s["required"]), "stay_min": s["stay_min"]} for s in source["stops"]]
         plan["requirements"]["must_ids"] = [s["location_id"] for d in shared["days"] for s in d["stops"] if s["required"]]
+        from core.trip import evaluate
+        return {"plan": plan, "check": evaluate(plan, catalog)}
+
+    def copy_share(self, token, share_id, start_date, catalog):
+        plan = self.preview_copy_share(share_id, start_date, catalog)["plan"]
         # Recheck revocation and create the Trip under the same write transaction.
         with self._connection() as conn:
             owner = self._owner(conn, token)
@@ -380,7 +407,7 @@ class JournalStore(TripStore):
             conn.execute("BEGIN")
             return _json(self._journal_payload(conn, owner))
 
-    def import_journal(self, token, raw):
+    def import_journal(self, token, raw, *, preview=False):
         if not isinstance(raw, str) or len(raw.encode()) > MAX_JOURNAL_BACKUP:
             raise ValueError("记录备份不得超过 16 MiB")
         try:
@@ -411,7 +438,10 @@ class JournalStore(TripStore):
         digest = hashlib.sha256(_json(data).encode()).hexdigest()
         with self._connection() as conn:
             owner = self._owner(conn, token)
-            conn.execute("BEGIN IMMEDIATE")
+            conn.execute("BEGIN" if preview else "BEGIN IMMEDIATE")
+            if preview:
+                return {"entries": entries, "photos": [meta for meta, _ in photos], "digest": digest,
+                        "already_imported": bool(conn.execute("SELECT 1 FROM journal_imports WHERE owner=? AND digest=?", (owner, digest)).fetchone())}
             if conn.execute("SELECT 1 FROM journal_imports WHERE owner=? AND digest=?", (owner, digest)).fetchone():
                 return 0
             if conn.execute("SELECT count(*) FROM journal_entries WHERE owner=?", (owner,)).fetchone()[0] + len(entries) > 500 or conn.execute("SELECT count(*) FROM journal_photos WHERE owner=?", (owner,)).fetchone()[0] + len(photos) > 50:

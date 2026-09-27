@@ -1,3 +1,4 @@
+from data_factory.normalization import SPOT_DETAIL_FIELDS
 import hashlib
 import json
 import os
@@ -9,7 +10,8 @@ from typing import Any, Dict, Iterable
 from core.retrieval import HybridRetriever
 
 
-SCHEMA_VERSION = "2"
+SCHEMA_VERSION = "3"
+SUPPORTED_SCHEMA_VERSIONS = {"2", "3"}
 DEFAULT_DB_PATH = "knowledge_base/animeway.sqlite3"
 
 
@@ -100,6 +102,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             episode TEXT,
             scene TEXT,
             verified_at TEXT,
+            details_json TEXT NOT NULL,
             UNIQUE(anime_id, spot_id)
         );
 
@@ -169,7 +172,7 @@ def build_runtime_index(
 
         spot_row_id = 0
         seen_spot_ids: set[tuple[int, str]] = set()
-        seen_spot_semantics: set[tuple[int, str, float, float]] = set()
+        seen_records: dict[tuple[int, str], dict] = {}
         city_alias_pairs: set[tuple[str, str]] = set()
         for item in items:
             anime_id = int(item["anime_id"])
@@ -225,16 +228,15 @@ def build_runtime_index(
 
             for spot in spots:
                 spot_id = str(spot.get("id") or "")
-                semantic_key = (
-                    anime_id,
-                    normalize_text(spot.get("name")),
-                    round(float(spot["lat"]), 6),
-                    round(float(spot["lon"]), 6),
-                )
-                if (anime_id, spot_id) in seen_spot_ids or semantic_key in seen_spot_semantics:
+                key = (anime_id, spot_id)
+                if not spot_id:
+                    raise ValueError(f"Missing source point ID for work {anime_id}")
+                if key in seen_spot_ids:
+                    if seen_records[key] != spot:
+                        raise ValueError(f"Conflicting source point: {key}")
                     continue
-                seen_spot_ids.add((anime_id, spot_id))
-                seen_spot_semantics.add(semantic_key)
+                seen_spot_ids.add(key)
+                seen_records[key] = spot
                 spot_row_id += 1
                 city = str(spot.get("city") or "")
                 city_norm = normalize_text(city)
@@ -244,8 +246,8 @@ def build_runtime_index(
                     INSERT INTO spots(
                         row_id, spot_id, anime_id, name, name_norm, city, city_norm,
                         image, lat, lon, description, tags_json, source_url,
-                        episode, scene, verified_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        episode, scene, verified_at, details_json
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         spot_row_id,
@@ -264,6 +266,7 @@ def build_runtime_index(
                         spot.get("episode"),
                         spot.get("scene"),
                         spot.get("verified_at"),
+                        json.dumps({key: spot[key] for key in SPOT_DETAIL_FIELDS if key in spot}, ensure_ascii=False),
                     ),
                 )
                 spot_search_values: list[Any] = [

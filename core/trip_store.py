@@ -101,7 +101,7 @@ class TripStore(PrivateStore):
                 raise ValueError("当天没有待处理站点")
             if kind == "visit":
                 location = next((p for p in catalog["locations"] if p["id"] == pending["location_id"]), None)
-                if not location or location.get("withdrawn") or (location.get("access") or {}).get("status") in {"closed", "prohibited"}:
+                if not location or location.get("withdrawn") or (location.get("access") or {}).get("status") in {"closed", "prohibited", "forbidden", "no_entry"}:
                     raise ValueError("此点禁止访问或已撤下，请跳过并反馈")
             archive["events"].append({"kind": kind, "date": day_date, "location_id": pending["location_id"] if kind in {"visit", "skip", "closed"} else "",
                                       "at_min": at_min, "recorded_at": _now()})
@@ -119,9 +119,10 @@ class TripStore(PrivateStore):
             conn.execute("DELETE FROM personal_trips WHERE owner=? AND trip_id=?", (owner, trip_id))
 
     def reserve_ai_call(self, token, trip_id, *, daily_limit, owner_limit, budget_units, reserve_units):
-        for val in (daily_limit, owner_limit, budget_units, reserve_units):
-            if type(val) is not int or val <= 0:
-                raise ValueError("AI 服务预算未启用；可继续人工编辑")
+        if (any(type(val) is not int for val in (daily_limit, owner_limit, budget_units, reserve_units))
+                or daily_limit <= 0 or owner_limit <= 0 or budget_units < 0 or reserve_units < 0
+                or ((budget_units == 0) != (reserve_units == 0))):
+            raise ValueError("AI 调用上限配置无效；可继续人工编辑")
         today = datetime.now(TOKYO).date().isoformat()
         with self._connection() as conn:
             owner = self._owner(conn, token)
@@ -130,7 +131,8 @@ class TripStore(PrivateStore):
                 raise ValueError("不能为其他身份的行程发起调用")
             total, reserved = conn.execute("SELECT count(*),coalesce(sum(reserved_units),0) FROM service_usage WHERE service='trip_ai' AND day=?", (today,)).fetchone()
             own = conn.execute("SELECT count(*) FROM service_usage WHERE service='trip_ai' AND day=? AND owner=?", (today, owner)).fetchone()[0]
-            if total >= daily_limit or own >= owner_limit or reserved + reserve_units > budget_units:
+            budget_exceeded = budget_units > 0 and reserved + reserve_units > budget_units
+            if total >= daily_limit or own >= owner_limit or budget_exceeded:
                 raise ValueError("今日 AI 次数或预算已达上限；原行程保留，可继续人工编辑")
             call_id = uuid.uuid4().hex
             conn.execute("INSERT INTO service_usage VALUES(?,?,?,?,?,?,?)", (call_id, owner, trip_id, "trip_ai", today, reserve_units, "reserved"))

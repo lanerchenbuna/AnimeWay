@@ -59,7 +59,7 @@ def private_identity(store) -> str | None:
             # Clear prior user's navigation when browser identity changes.
             if token and token != incoming:
                 for key in list(st.session_state):
-                    if key.startswith(("awp_", "awj_")):
+                    if key.startswith(("awp_", "awj_", "awmap_", "aw_review", "aw_pending_tab")):
                         st.session_state.pop(key, None)
                 for key in ("aw_selected_trip", "aw_selected_location", "aw_history", "aw_control_memory", "aw_view_event"):
                     st.session_state.pop(key, None)
@@ -69,7 +69,7 @@ def private_identity(store) -> str | None:
             st.session_state["aw_identity_persistent"] = result.get("persistent") is True
         elif isinstance(incoming, str) and incoming != st.session_state.get("_aw_invalid_identity"):
             for key in list(st.session_state):
-                if key.startswith(("awp_", "awj_")):
+                if key.startswith(("awp_", "awj_", "awmap_", "aw_review", "aw_pending_tab")):
                     st.session_state.pop(key, None)
             for key in ("aw_selected_trip", "aw_history", "aw_control_memory", "aw_view_event"):
                 st.session_state.pop(key, None)

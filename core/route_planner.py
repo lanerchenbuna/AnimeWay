@@ -230,6 +230,13 @@ class RoutePlanner:
         end: Dict[str, Any],
     ) -> tuple[str, list[str], float]:
         distance_km = self._distance_km(start, end)
+        # The currently documented AMap overseas service covers walking and
+        # driving; Tokyo transit is attempted only where the transit endpoint
+        # returns a real plan. Never silently turn a Japan rail leg into a car.
+        if all(self._is_japan_point(point) for point in (start, end)):
+            if distance_km <= self.WALK_FALLBACK_MAX_KM:
+                return "urban_transit", ["transit", "walking"], distance_km
+            return "intercity_rail", ["transit"], distance_km
         if distance_km <= self.WALK_FIRST_MAX_KM:
             return "short_walk", ["walking", "transit", "driving"], distance_km
         if self._same_city(start, end):

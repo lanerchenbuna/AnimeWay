@@ -1,7 +1,7 @@
-streamlit>=1.30.0
-requests>=2.31.0
-pydeck>=0.8.0
-dashscope>=1.14.0
-geopy>=2.4.0
-pydantic>=2.0.0
+streamlit>=1.60,<2
+requests>=2.31,<3
+pydeck>=0.8,<1
+geopy>=2.4,<3
+pydantic>=2,<3
+dashscope>=1.14,<2
 pillow>=10,<13
