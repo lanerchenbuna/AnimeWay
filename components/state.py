@@ -23,8 +23,6 @@ def init_session_state() -> None:
         "page": 0,
         "search_candidates": [],
         "messages": [],
-        "planned_routes": None,
-        "optimized_points": [],
         "is_rec_result": False,
         "last_rec_query": "",
         "locale": DEFAULT_LOCALE,
@@ -111,8 +109,6 @@ def add_to_itinerary(point: dict, anime_name: str | None = None) -> None:
 
     point_copy["_local_id"] = local_id
     st.session_state["itinerary"].append(point_copy)
-    st.session_state["planned_routes"] = None
-    st.session_state["optimized_points"] = []
     st.toast(tr("added", name=point_copy.get("cn") or point_copy.get("name")))
     st.rerun()
 
@@ -120,7 +116,5 @@ def add_to_itinerary(point: dict, anime_name: str | None = None) -> None:
 def remove_from_itinerary(index: int) -> None:
     if 0 <= index < len(st.session_state["itinerary"]):
         item = st.session_state["itinerary"].pop(index)
-        st.session_state["planned_routes"] = None
-        st.session_state["optimized_points"] = []
         st.toast(tr("removed", name=item.get("cn") or item.get("name")))
         st.rerun()

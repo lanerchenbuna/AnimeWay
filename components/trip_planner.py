@@ -4,7 +4,6 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 import sqlite3
-import time
 
 import streamlit as st
 
@@ -26,19 +25,35 @@ def _attempt(action):
 def _open(trip_id=None, *, rerun=True):
     st.session_state["awp_selected"] = trip_id
     st.session_state["awp_mode"] = "detail" if trip_id else "new"
+    st.session_state["aw_pending_tab"] = "trips" if trip_id else "planning"
     st.session_state.pop("awp_ai_preview", None)
     if rerun:
         st.rerun()
 
 
+def open_draft(draft_id, *, rerun=True):
+    st.session_state["awp_draft_id"] = draft_id
+    st.session_state["awp_mode"] = "draft"
+    st.session_state["aw_pending_tab"] = "trips"
+    st.session_state.pop("awp_ai_preview", None)
+    if rerun:
+        st.rerun()
+
+
+def _create_draft(store, token, plan, source="manual"):
+    draft = _attempt(lambda: store.create_personal_draft(token, plan, source))
+    if draft:
+        open_draft(draft["id"], rerun=False)
+
+
+def _edit_record(store, token, record, operation, catalog):
+    if record.get("_draft"):
+        return store.edit_personal_draft(token, record["id"], record["revision"], operation, catalog)
+    return store.edit_personal_trip(token, record["id"], record["revision"], operation, catalog)
+
+
 def _adopt(store, token, plan):
-    saved = _attempt(lambda: store.create_personal_trip(token, plan))
-    if saved:
-        origin = st.session_state.get("awj_origin", {})
-        if hasattr(store, "record_journey_event") and 0 <= time.time() - origin.get("at", 0) <= 1800 and any(s["location_id"] == origin.get("location_id") for d in plan["days"] for s in d["stops"]):
-            _attempt(lambda: store.record_journey_event(token, "update_trip_created", origin["location_id"], "update"))
-            st.session_state.pop("awj_origin", None)
-        _open(saved["id"], rerun=False)
+    _create_draft(store, token, plan)
 
 
 def _name(catalog, location_id):
@@ -77,7 +92,7 @@ def _requirements_form(plan, catalog, prefix, *, disabled=False):
     for item in req["must_ids"] + req["excluded_ids"]:
         places.setdefault(item, f"已失效地点 {item}")
     with st.form(f"{prefix}_form"):
-        title = st.text_input("Trip 名称", req["title"], key=f"{prefix}_title", max_chars=300)
+        title = st.text_input("行程名称", req["title"], key=f"{prefix}_title", max_chars=300)
         start = st.text_input("开始日期（YYYY-MM-DD / 今天 / 明天 / 后天）", req["start_date"], key=f"{prefix}_date")
         anime_ids = st.multiselect("想巡礼的作品（最多三部）", list(works), default=req["anime_ids"], format_func=works.get, key=f"{prefix}_works")
         must = st.multiselect("必去场景所在地点", list(places), default=req["must_ids"], format_func=places.get, key=f"{prefix}_must")
@@ -139,10 +154,29 @@ def _checks(result, catalog):
             name = _name(catalog, issue["location_id"]) if issue["location_id"] else "当天条件"
             st.write(f"{issue['date']} · {name}：{issue['message']}")
     st.caption("未知费用不按 0 元计算；含估算的时间不能用于确认预约、关闭时间或末班车。")
+    for day in result["days"]:
+        totals = day["totals"]
+        fare = "待核查" if totals["fare_jpy"] is None else f"{totals['fare_jpy']} 日元"
+        st.caption(f"{day['date']} · 已知移动／等待 {totals['known_moving_min'] + totals['known_waiting_min']} 分钟"
+                   f" · 待核查交通 {totals['unknown_legs']} 段 · 交通费用：{fare}"
+                   f" · 预计结束 {clock(day['finish_min'])}")
+
+
+def render_draft_preview(plan, catalog):
+    """The same compact preview for form, AI and legacy conversion entries."""
+    result = evaluate(plan, catalog)
+    req = plan["requirements"]
+    st.caption(f"{req['start_date']} · {req['day_count']} 日 · "
+               f"{'步行为主' if req['mode'] == 'walk' else '公共交通为主'} · 日本时间")
+    for day in plan["days"]:
+        st.write(f"{day['date']}：" + (" → ".join(_name(catalog, stop["location_id"])
+                                                for stop in day["stops"]) or "尚无站点"))
+    _checks(result, catalog)
+    return result
 
 
 def _new(store, token, catalog, api_key):
-    st.subheader("建立 1—3 日个人 Trip")
+    st.subheader("建立 1—3 日巡礼行程")
     if "awp_seed" not in st.session_state:
         st.session_state["awp_seed"] = empty_plan(new_requirements("明天"))
     with st.expander("用一句话整理需求（可选）"):
@@ -190,20 +224,23 @@ def _new(store, token, catalog, api_key):
         with st.container(border=True):
             st.subheader(option["label"])
             st.write(option["reason"])
-            for day in option["plan"]["days"]:
-                st.write(f"{day['date']} · {clock(day['start_min'])}—{clock(day['end_min'])}")
-                st.write(" → ".join(_name(catalog, stop["location_id"]) for stop in day["stops"]) or "未找到符合所选作品的候选地点")
-            _checks(evaluate(option["plan"], catalog), catalog)
-            st.button("保存这份个人 Trip 草案", key=f"awp_adopt_{index}", disabled=not token, type="primary",
+            render_draft_preview(option["plan"], catalog)
+            st.button("打开草案并修改", key=f"awp_adopt_{index}", disabled=not token, type="primary",
                       on_click=_adopt, args=(store, token, option["plan"]))
+
+
+def render_trip_creation(store, token, catalog, api_key=""):
+    st.title("规划行程")
+    st.caption("选择作品、日期与交通方式，查看草案，修改后再保存到我的行程。")
+    _new(store, token, catalog, api_key)
 
 
 def _local_edit(store, token, archive, day, stop, catalog):
     prefix = f"awp_edit_{archive['id']}_{archive['revision']}_{stop['location_id']}"
-    with st.expander("编辑此站：停留、顺序、替换、锁定"):
+    with st.expander("编辑此站：停留、顺序、交通、替换、锁定"):
         st.caption("锁定同时保护站点位置和停留；要改变核心项，请先人工解锁。已执行部分不接受规划修改。")
         st.caption("停留为经验建议：轻松节奏约 20—40 分钟，普通节奏约 10—25 分钟；请按拍摄与体力调整。")
-        choices = {"stay": "调整停留", "move": "调整顺序", "replace": "替换地点", "remove": "删除可选站", "lock": "锁定／解锁", "appointment": "预约／关闭截止时间", "visit_mode": "公共区域外观／计划入内"}
+        choices = {"stay": "调整停留", "move": "调整顺序", "leg_mode": "调整到此站的交通方式", "replace": "替换地点", "remove": "删除可选站", "lock": "锁定／解锁", "appointment": "预约／关闭截止时间", "visit_mode": "公共区域外观／计划入内"}
         kind = st.selectbox("操作", list(choices), format_func=choices.get, key=f"{prefix}_kind")
         operation = {"kind": kind, "date": day["date"], "location_id": stop["location_id"]}
         invalid = False
@@ -219,6 +256,11 @@ def _local_edit(store, token, archive, day, stop, catalog):
             operation["replacement_id"] = st.selectbox("替代场景所在地点", list(pool), format_func=pool.get, key=f"{prefix}_replacement")
         elif kind == "lock":
             operation["value"] = st.checkbox("锁定此站", value=stop["locked"], key=f"{prefix}_lock")
+        elif kind == "leg_mode":
+            modes = {None: "跟随行程默认方式", "walk": "步行估算", "transit": "公共交通，待核查"}
+            operation["value"] = st.selectbox("到此站的交通方式", list(modes),
+                                               index=list(modes).index(stop.get("leg_mode")),
+                                               format_func=modes.get, key=f"{prefix}_leg_mode")
         elif kind == "appointment":
             value = st.text_input("当地时间 HH:MM（留空取消）", "" if stop["appointment_min"] is None else clock(stop["appointment_min"]), key=f"{prefix}_appointment")
             if value:
@@ -230,27 +272,121 @@ def _local_edit(store, token, archive, day, stop, catalog):
             modes = {"exterior": "允许的公共区域外观", "entry": "计划入内（另核开放与许可）"}
             operation["value"] = st.selectbox("到访方式", list(modes), index=list(modes).index(stop["visit_mode"]), format_func=modes.get, key=f"{prefix}_visitmode")
         if st.button("应用此项人工修改", key=f"{prefix}_apply", disabled=invalid):
-            if _attempt(lambda: store.edit_personal_trip(token, archive["id"], archive["revision"], operation, catalog)):
+            if _attempt(lambda: _edit_record(store, token, archive, operation, catalog)):
                 st.rerun()
 
 
-def _today(store, token, archive, checked_day, catalog):
-    if archive["state"] != "on_trip" or checked_day["ended"]:
+def _today_focus(store, token, archive, result, catalog):
+    """One field-use panel backed by the same evaluated remainder as the editor."""
+    days = result["days"]
+    local_date = datetime.now(TOKYO).date().isoformat()
+    preferred = next((i for i, day in enumerate(days) if day["date"] == local_date and not day["ended"]),
+                     next((i for i, day in enumerate(days) if not day["ended"]), 0))
+    st.header("当天使用")
+    selected_date = st.selectbox("选择要记录的行程日期（日本时间）", [day["date"] for day in days],
+                                 index=preferred, key=f"awp_today_day_{archive['id']}")
+    checked_day = next(day for day in days if day["date"] == selected_date)
+    if selected_date != local_date:
+        st.warning("所选日期不是当前日本日期。补记或提前操作前，请确认日期和现场时间。")
+    if checked_day["ended"]:
+        st.info("这一天已经结束；原到访和跳过记录仍在下方完整日程中。")
         return
-    pending = checked_day["next_id"]
-    st.markdown(f"**当前待处理站：{_name(catalog, pending) if pending else '当天站点已处理完'}**")
-    following = [row for row in checked_day["rows"] if row["outcome"] == "pending"]
-    if len(following) > 1:
-        st.caption(f"下一站：{_name(catalog, following[1]['location_id'])}")
-    prefix = f"awp_today_{archive['id']}_{archive['revision']}_{checked_day['date']}"
-    current = st.text_input("现场当地时间 HH:MM（请确认）", datetime.now(TOKYO).strftime("%H:%M"), key=f"{prefix}_time")
-    labels = {"visit": "我已到访此站", "skip": "跳过此站", "closed": "此站临时关闭", "delay": "报告迟到／当前时间", "end_day": "提前结束当天", "end_trip": "提前结束整趟旅行"}
-    kind = st.selectbox("当天操作", list(labels), format_func=labels.get, key=f"{prefix}_kind")
-    st.caption("到访仅由你主动确认；跳过和关闭不会计为到访。迟到后仅调整剩余安排，原执行记录保留。")
-    confirm = st.checkbox("确认记录这次现场操作", key=f"{prefix}_confirm")
-    if st.button("记录并检查剩余安排", key=f"{prefix}_record", disabled=not confirm):
-        if _attempt(lambda: store.record_personal_event(token, archive["id"], archive["revision"], checked_day["date"], kind, minutes(current), catalog)):
+    pending = [row for row in checked_day["rows"] if row["outcome"] == "pending"]
+    places = {point["id"]: point for point in catalog["locations"]}
+    current = pending[0] if pending else None
+    point = places.get(current["location_id"]) if current else None
+    with st.container(border=True):
+        st.subheader("现在")
+        if current:
+            leg = current["leg"]
+            st.markdown(f"**{_name(catalog, current['location_id'])}**")
+            st.caption(f"到此站：{'步行' if leg['mode'] == 'walk' else '公共交通'}"
+                       f"{'（单段设置）' if leg['overridden'] else ''} · {leg['reason']}")
+            st.caption(f"预计抵达 {clock(current['arrival_min'])}；停留 {current['stop']['stay_min']} 分钟。估算或未知时间不能当作现场时刻表。")
+            if point:
+                from core.place_links import blocked
+                st.write((point.get("access") or {}).get("summary") or "访问条件待核查")
+                if point.get("entry"):
+                    st.caption(f"入口：{point['entry']}")
+                viewpoint = point.get("viewpoint")
+                if isinstance(viewpoint, dict):
+                    viewpoint = viewpoint.get("summary")
+                if viewpoint:
+                    st.caption(f"机位／视角：{viewpoint}")
+                if blocked(point):
+                    st.warning("当前资料显示关闭、禁止进入或已撤下；不能确认到访，请选择跳过或临时关闭并核查现场。")
+                else:
+                    from core.trip_navigation import directions_url
+                    link = _attempt(lambda: directions_url(point, leg["mode"]))
+                    if link:
+                        st.link_button("按所选交通方式打开外部导航", link, width="stretch")
+                        st.caption("外部地图可能更改路线；请在地图内核对交通方式、当前位置和可进入区域。打开导航不会记录到访。")
+        else:
+            st.success("当天所有站点已经处理。是否前往终点，请核对下方交通段。")
+    with st.container(border=True):
+        st.subheader("下一步")
+        if len(pending) > 1:
+            following = pending[1]
+            leg = following["leg"]
+            st.write(f"当前站处理后：{_name(catalog, following['location_id'])}")
+            st.caption(f"预计到下一站：{'步行' if leg['mode'] == 'walk' else '公共交通'} · {leg['reason']}")
+        else:
+            leg = checked_day["return_leg"]
+            st.write("返回当天终点")
+            st.caption(f"{'步行' if leg['mode'] == 'walk' else '公共交通'} · {leg['reason']}")
+            from core.trip_navigation import directions_url
+            from core.trip_transport import resolve_anchor
+            planned_day = next(day for day in archive["plan"]["days"] if day["date"] == selected_date)
+            destination = resolve_anchor(planned_day["end"], catalog)
+            link = _attempt(lambda: directions_url(destination, leg["mode"])) if destination else None
+            if link:
+                st.link_button("按回程交通方式导航到终点", link, width="stretch")
+            else:
+                st.caption("终点位置未确认或已失效，请先核对终点；不生成导航链接。")
+    totals = checked_day["totals"]
+    fare = "待核查" if totals["fare_jpy"] is None else f"{totals['fare_jpy']} 日元"
+    st.caption(f"剩余已知移动／等待 {totals['known_moving_min'] + totals['known_waiting_min']} 分钟；"
+               f"待核查交通 {totals['unknown_legs']} 段；费用 {fare}；预计结束 {clock(checked_day['finish_min'])}。")
+    day_issues = [issue for issue in result["issues"] if issue["date"] == selected_date]
+    for issue in day_issues[:3]:
+        st.warning(issue["message"])
+    if len(day_issues) > 3:
+        st.caption(f"另有 {len(day_issues) - 3} 项行前问题，可在完整日程中查看。")
+    last_visit = next((event for event in reversed(archive["events"])
+                       if event["date"] == selected_date and event["kind"] == "visit"), None)
+    if last_visit:
+        st.caption(f"最近已确认到访：{_name(catalog, last_visit['location_id'])}。剩余交通从该站估算；若已离开或改线，请核对实际起点。")
+    else:
+        st.caption("剩余交通从计划起点估算；应用不读取你的位置。请在外部地图确认当前出发点。")
+    prefix = f"awp_today_{archive['id']}_{archive['revision']}_{selected_date}"
+    at_text = st.text_input("现场当地时间 HH:MM", datetime.now(TOKYO).strftime("%H:%M"), key=f"{prefix}_time")
+    confirm = st.checkbox("我已核对行程日期、现场时间和这次操作", key=f"{prefix}_confirm")
+
+    def record(kind):
+        if _attempt(lambda: store.record_personal_event(token, archive["id"], archive["revision"],
+                                                        selected_date, kind, minutes(at_text), catalog)):
             st.rerun()
+
+    if current:
+        from core.place_links import blocked
+        visit, skip, closed = st.columns(3)
+        with visit:
+            if st.button("我已到访", key=f"{prefix}_visit", disabled=not confirm or blocked(point), width="stretch"):
+                record("visit")
+        with skip:
+            if st.button("跳过此站", key=f"{prefix}_skip", disabled=not confirm, width="stretch"):
+                record("skip")
+        with closed:
+            if st.button("此站临时关闭", key=f"{prefix}_closed", disabled=not confirm, width="stretch"):
+                record("closed")
+    st.caption("导航、跳过和临时关闭均不会记为到访；每次操作后按保留的站点与交通设置重新评估剩余安排。")
+    with st.expander("更新现场时间或提前结束"):
+        if st.button("记录当前时间并重算", key=f"{prefix}_delay", disabled=not confirm):
+            record("delay")
+        if st.button("提前结束当天", key=f"{prefix}_end_day", disabled=not confirm):
+            record("end_day")
+        if st.button("结束整趟行程", key=f"{prefix}_end_trip", disabled=not confirm):
+            record("end_trip")
 
 
 def export_personal_checklist(archive, catalog):
@@ -259,12 +395,16 @@ def export_personal_checklist(archive, catalog):
     result = evaluate(archive["plan"], catalog, archive["events"])
     req = archive["plan"]["requirements"]
     lines = [req["title"], f"版本 {archive['revision']} · {req['timezone']} · 状态 {archive['state']}",
+             f"默认交通：{'步行' if req['mode'] == 'walk' else '公共交通'}",
              "个人筹备草案，非已验证行程。此文字文件可离线读取；外部导航需网络，无图片／离线地图。", result["promise"], ""]
     for day, check in zip(archive["plan"]["days"], result["days"]):
         lines.extend([f"{day['date']} {clock(day['start_min'])}—{clock(day['end_min'])}",
                       f"起点：{day['start']['name']}（{'已确认' if day['start']['confirmed'] else '未确认'}）",
                       f"终点：{day['end']['name']}（{'已确认' if day['end']['confirmed'] else '未确认'}）",
-                      f"用餐 {day['meal_min']} / 休息 {day['break_min']} / 余量 {day['buffer_min']} 分钟；费用未知"])
+             f"用餐 {day['meal_min']} / 休息 {day['break_min']} / 余量 {day['buffer_min']} 分钟",
+             f"已知移动／等待 {check['totals']['known_moving_min'] + check['totals']['known_waiting_min']} 分钟；"
+             f"待核查交通 {check['totals']['unknown_legs']} 段；"
+             f"交通费用 {'待核查' if check['totals']['fare_jpy'] is None else str(check['totals']['fare_jpy']) + ' 日元'}"])
         for index, row in enumerate(check["rows"], 1):
             point = next((p for p in catalog["locations"] if p["id"] == row["location_id"]), None)
             lines.extend([f"{index}. {_name(catalog, row['location_id'])} · {row['outcome']}",
@@ -275,11 +415,77 @@ def export_personal_checklist(archive, catalog):
                 if not point.get("withdrawn") and (point.get("access") or {}).get("status") not in {"prohibited", "closed", "forbidden", "no_entry"} and row["outcome"] == "pending":
                     lines.append(navigation_url(point))
             if row.get("leg"):
-                lines.append(row["leg"]["reason"])
+                lines.append(f"到站交通 {'步行' if row['leg']['mode'] == 'walk' else '公共交通'}：{row['leg']['reason']}")
+        lines.append(f"到终点交通 {'步行' if check['return_leg']['mode'] == 'walk' else '公共交通'}：{check['return_leg']['reason']}")
         lines.append("")
     lines.append("行前仍需检查：")
     lines.extend(f"{i['date']} {_name(catalog, i['location_id']) if i['location_id'] else ''}：{i['message']}" for i in result["issues"])
     return '\n'.join(lines)
+
+
+def _editor_days(store, token, archive, catalog, result):
+    plan = archive["plan"]
+    prefix = f"awp_{archive['id']}_{archive['revision']}"
+    places = {point["id"]: point for point in catalog["locations"]}
+    for day, check in zip(plan["days"], result["days"]):
+        st.subheader(f"{day['date']} · {clock(day['start_min'])}—{clock(day['end_min'])}")
+        st.write(f"{day['start']['name']} → {day['end']['name']}")
+        totals = check["totals"]
+        st.caption(f"已知移动 {totals['known_moving_min']} / 已知等待 {totals['known_waiting_min']} / 待核查交通 {totals['unknown_legs']} 段 / 停留 {totals['stay_min']} / 用餐 {totals['meal_min']} / 休息 {totals['break_min']} / 余量 {totals['buffer_min']} 分钟")
+        if archive["state"] == "on_trip":
+            st.caption("以上为剩余安排预算；系统不推测你是否已用餐或休息，可在需求卡主动调整剩余预留。")
+        fare = "待核查" if totals["fare_jpy"] is None else f"{totals['fare_jpy']} 日元"
+        st.caption(f"步行{'合计' if totals['walk_complete'] else '已知部分'} {totals['walk_m']/1000:.1f} km；交通费用 {fare}（已知部分 {totals['known_fare_jpy']} 日元；场所费用另核）。预计结束 {clock(check['finish_min'])}（草案）")
+        for index, row in enumerate(check["rows"], 1):
+            stop, point = row["stop"], places.get(row["location_id"])
+            with st.container(border=True):
+                st.markdown(f"**{index}. {_name(catalog, stop['location_id'])}**")
+                st.caption(f"{'必去' if stop['priority']=='required' else '可选'} · {'已锁定' if stop['locked'] else '可编辑'} · 建议停留 {stop['stay_min']} 分钟")
+                outcome = {"visit": "已到访（用户确认）", "skip": "已跳过，未记到访", "closed": "临时关闭，未记到访", "not_visited": "提前结束后未到访", "pending": "待处理"}[row["outcome"]]
+                st.write(outcome)
+                if row["outcome"] == "pending":
+                    st.caption(f"抵达 {clock(row['arrival_min'])} / 离开 {clock(row['departure_min'])} · {'含估算，待核查' if row['provisional'] else '仅时间预算'}")
+                    st.caption(f"本段休息 {row['break_min']} / 用餐 {row['meal_min']} 分钟")
+                    st.caption(f"到站交通：{'步行' if row['leg']['mode'] == 'walk' else '公共交通'}{'（单段设置）' if row['leg']['overridden'] else ''} · {row['leg']['status']}")
+                    st.write(row["leg"]["reason"])
+                    if row["leg"].get("reference"):
+                        st.caption(row["leg"]["reference"])
+                        st.link_button("查看官方接近参考", row["leg"]["source_url"])
+                    if point:
+                        from components.pilgrimage import _navigation, _scene
+                        st.write((point.get("access") or {}).get("summary", "访问资料未知"))
+                        _navigation(point)
+                        with st.expander("查看原作关联与到访依据"):
+                            for scene in catalog["scenes"]:
+                                if scene["location_id"] == point["id"] and not point.get("withdrawn") and not scene.get("upstream_removed"):
+                                    _scene(scene, catalog)
+                    if archive["state"] != "ended":
+                        _local_edit(store, token, archive, day, stop, catalog)
+                elif row.get("actual_min") is not None:
+                    st.caption(f"用户记录时间 {clock(row['actual_min'])}；不从计划时间推断到访")
+        st.caption(f"到终点：{'步行' if check['return_leg']['mode'] == 'walk' else '公共交通'}{'（单段设置）' if check['return_leg']['overridden'] else ''} · {check['return_leg']['reason']}")
+        if archive["state"] != "ended" and not check["ended"]:
+            with st.expander("调整到终点的交通方式"):
+                return_modes = {None: "跟随行程默认方式", "walk": "步行估算", "transit": "公共交通，待核查"}
+                choice = st.selectbox("回程方式", list(return_modes),
+                                      index=list(return_modes).index(day.get("return_mode")),
+                                      format_func=return_modes.get, key=f"{prefix}_{day['date']}_return_mode")
+                if st.button("应用回程交通设置", key=f"{prefix}_{day['date']}_return_apply"):
+                    if _attempt(lambda: _edit_record(store, token, archive,
+                                                     {"kind": "return_mode", "date": day["date"], "value": choice}, catalog)):
+                        st.rerun()
+        if archive["state"] != "ended" and not check["ended"]:
+            with st.expander("增加相关场景／缩短当天时间"):
+                pool = {p["id"]: p["name"] for p in candidates(plan, catalog) if p["id"] not in {s["location_id"] for d in plan["days"] for s in d["stops"]}}
+                if pool:
+                    choice = st.selectbox("可增加地点", list(pool), format_func=pool.get, key=f"{prefix}_{day['date']}_add_choice")
+                    if st.button("增加到当天末尾并检查", key=f"{prefix}_{day['date']}_add"):
+                        if _attempt(lambda: _edit_record(store, token, archive, {"kind": "add", "date": day["date"], "replacement_id": choice}, catalog)):
+                            st.rerun()
+                end_text = st.text_input("新的当天截止时间 HH:MM", clock(day["end_min"]), key=f"{prefix}_{day['date']}_end_text")
+                if st.button("更新截止时间并检查", key=f"{prefix}_{day['date']}_end"):
+                    if _attempt(lambda: _edit_record(store, token, archive, {"kind": "end_time", "date": day["date"], "value": minutes(end_text)}, catalog)):
+                        st.rerun()
 
 
 def _detail(store, token, catalog, api_key):
@@ -290,14 +496,19 @@ def _detail(store, token, catalog, api_key):
     plan, prefix = archive["plan"], f"awp_{archive['id']}_{archive['revision']}"
     st.header(plan["requirements"]["title"])
     st.caption(f"日本时间 · 版本 {archive['revision']} · { {'draft':'筹备草案','on_trip':'当天使用中','ended':'已提前结束'}[archive['state']] }")
+    st.caption(f"行程默认交通：{'步行' if plan['requirements']['mode'] == 'walk' else '公共交通'}；单段设置保留在各站和回程")
     cached = st.session_state.get("awp_check_cache", {})
     result = evaluate(plan, catalog, archive["events"], cached.get(archive["id"]))
     st.session_state["awp_check_cache"] = {archive["id"]: result}
+    if archive["state"] == "on_trip":
+        _today_focus(store, token, archive, result, catalog)
+        if not st.checkbox("查看完整日程与编辑工具", key=f"awp_full_editor_{archive['id']}"):
+            return
     _checks(result, catalog)
     if archive["state"] != "ended":
         with st.expander("编辑需求卡：日期、住宿、每日时间、作品与体力"):
             changed = _requirements_form(plan, catalog, f"{prefix}_requirements")
-            if changed and _attempt(lambda: store.edit_personal_trip(token, archive["id"], archive["revision"], {"kind": "requirements", "plan": changed}, catalog)):
+            if changed and _attempt(lambda: _edit_record(store, token, archive, {"kind": "requirements", "plan": changed}, catalog)):
                 st.rerun()
     if archive["state"] == "draft":
         accept_unknown = st.checkbox("我知道仍有待核查内容，准备按草案使用当天清单", key=f"{prefix}_ack")
@@ -316,54 +527,7 @@ def _detail(store, token, catalog, api_key):
     if hasattr(store, "entries") and st.button("管理到访记录与照片", key="awp_journal"):
         from components.map_trip import open_handbook
         open_handbook("journal", awj_mode="足迹", awj_import_trip=archive["id"])
-    for day, check in zip(plan["days"], result["days"]):
-        st.subheader(f"{day['date']} · {clock(day['start_min'])}—{clock(day['end_min'])}")
-        st.write(f"{day['start']['name']} → {day['end']['name']}")
-        totals = check["totals"]
-        st.caption(f"移动 {totals['moving_min'] if totals['moving_min'] is not None else '未知'} / 等待 {totals['waiting_min'] if totals['waiting_min'] is not None else '未知'} / 停留 {totals['stay_min']} / 用餐 {totals['meal_min']} / 休息 {totals['break_min']} / 余量 {totals['buffer_min']} 分钟")
-        if archive["state"] == "on_trip":
-            st.caption("以上为剩余安排预算；系统不推测你是否已用餐或休息，可在需求卡主动调整剩余预留。")
-        st.caption(f"步行草案{'合计' if totals['walk_complete'] else '已估算部分'} {totals['walk_m']/1000:.1f} km；交通与场所费用合计未知。预计结束 {clock(check['finish_min'])}（草案）")
-        _today(store, token, archive, check, catalog)
-        for index, row in enumerate(check["rows"], 1):
-            stop, point = row["stop"], places.get(row["location_id"])
-            with st.container(border=True):
-                st.markdown(f"**{index}. {_name(catalog, stop['location_id'])}**")
-                st.caption(f"{'必去' if stop['priority']=='required' else '可选'} · {'已锁定' if stop['locked'] else '可编辑'} · 建议停留 {stop['stay_min']} 分钟")
-                outcome = {"visit": "已到访（用户确认）", "skip": "已跳过，未记到访", "closed": "临时关闭，未记到访", "not_visited": "提前结束后未到访", "pending": "待处理"}[row["outcome"]]
-                st.write(outcome)
-                if row["outcome"] == "pending":
-                    st.caption(f"抵达 {clock(row['arrival_min'])} / 离开 {clock(row['departure_min'])} · {'含估算，待核查' if row['provisional'] else '仅时间预算'}")
-                    st.caption(f"本段休息 {row['break_min']} / 用餐 {row['meal_min']} 分钟")
-                    st.write(row["leg"]["reason"])
-                    if row["leg"].get("reference"):
-                        st.caption(row["leg"]["reference"])
-                        st.link_button("查看官方接近参考", row["leg"]["source_url"])
-                    if point:
-                        from components.pilgrimage import _navigation, _scene
-                        st.write((point.get("access") or {}).get("summary", "访问资料未知"))
-                        _navigation(point)
-                        with st.expander("查看原作关联与到访依据"):
-                            for scene in catalog["scenes"]:
-                                if scene["location_id"] == point["id"] and not point.get("withdrawn") and not scene.get("upstream_removed"):
-                                    _scene(scene, catalog)
-                    if archive["state"] != "ended":
-                        _local_edit(store, token, archive, day, stop, catalog)
-                elif row.get("actual_min") is not None:
-                    st.caption(f"用户记录时间 {clock(row['actual_min'])}；不从计划时间推断到访")
-        st.caption(f"到终点的连接：{check['return_leg']['reason']}")
-        if archive["state"] != "ended" and not check["ended"]:
-            with st.expander("增加相关场景／缩短当天时间"):
-                pool = {p["id"]: p["name"] for p in candidates(plan, catalog) if p["id"] not in {s["location_id"] for d in plan["days"] for s in d["stops"]}}
-                if pool:
-                    choice = st.selectbox("可增加地点", list(pool), format_func=pool.get, key=f"{prefix}_{day['date']}_add_choice")
-                    if st.button("增加到当天末尾并检查", key=f"{prefix}_{day['date']}_add"):
-                        if _attempt(lambda: store.edit_personal_trip(token, archive["id"], archive["revision"], {"kind": "add", "date": day["date"], "replacement_id": choice}, catalog)):
-                            st.rerun()
-                end_text = st.text_input("新的当天截止时间 HH:MM", clock(day["end_min"]), key=f"{prefix}_{day['date']}_end_text")
-                if st.button("更新截止时间并检查", key=f"{prefix}_{day['date']}_end"):
-                    if _attempt(lambda: store.edit_personal_trip(token, archive["id"], archive["revision"], {"kind": "end_time", "date": day["date"], "value": minutes(end_text)}, catalog)):
-                        st.rerun()
+    _editor_days(store, token, archive, catalog, result)
     if archive["history"] and archive["state"] != "ended":
         with st.expander("撤销／恢复旧规划版本"):
             st.caption("保留最近 20 个规划版本；恢复会生成新版本，现场执行记录不会被撤销。")
@@ -388,6 +552,40 @@ def _detail(store, token, catalog, api_key):
                 st.rerun()
 
 
+def _draft_detail(store, token, catalog, api_key):
+    draft = _attempt(lambda: store.get_personal_draft(token, st.session_state.get("awp_draft_id", ""))) if token else None
+    if not draft:
+        st.warning("未找到这份未保存草案，请从草案列表重新打开。")
+        return
+    record = {**draft, "state": "draft", "events": [], "_draft": True}
+    plan = draft["plan"]
+    source_names = {"manual": "表单", "routebook": "智能路书", "map": "地图地点",
+                    "handbook": "旧手册", "backpack": "临时背包"}
+    st.header(plan["requirements"]["title"])
+    st.caption(f"未保存草案 · 来源：{source_names.get(draft['source'], draft['source'])} · 日本时间 · 自动暂存于当前私人档案")
+    st.caption("草案不会出现在已保存 Trip 中，也不包含在私人备份文件里；确认后点击下方保存。")
+    result = render_draft_preview(plan, catalog)
+    with st.expander("修改作品、日期、交通及每日条件"):
+        changed = _requirements_form(plan, catalog, f"awp_draft_{draft['id']}_{draft['revision']}")
+        if changed and _attempt(lambda: _edit_record(store, token, record,
+                                                     {"kind": "requirements", "plan": changed}, catalog)):
+            st.rerun()
+    _editor_days(store, token, record, catalog, result)
+    _ai_editor(store, token, record, catalog, api_key)
+    if st.button("保存到我的行程", key=f"awp_commit_{draft['id']}_{draft['revision']}", type="primary"):
+        saved = _attempt(lambda: store.commit_personal_draft(token, draft["id"], draft["revision"]))
+        if saved:
+            _open(saved["id"])
+    with st.expander("删除未保存草案"):
+        if st.button("删除这份草案", key=f"awp_discard_{draft['id']}_{draft['revision']}"):
+            def discard():
+                store.discard_personal_draft(token, draft["id"], draft["revision"])
+                return True
+            if _attempt(discard):
+                st.session_state["awp_mode"] = "list"
+                st.rerun()
+
+
 def _ai_editor(store, token, archive, catalog, api_key):
     if archive["state"] == "ended":
         return
@@ -400,7 +598,7 @@ def _ai_editor(store, token, archive, catalog, api_key):
         text = st.text_area("例如：把第二天提前一小时结束，保留锁定站", key=f"awp_ai_text_{archive['id']}", max_chars=2000)
         st.caption("只发送当前站点选择、时间条件、候选名称和这段指令，不发送住宿坐标、身份凭据或完整历史。")
         if st.button("生成修改预览", key=f"awp_ai_request_{archive['id']}", disabled=not trip_ai.enabled(api_key)):
-            with st.spinner("正在整理局部修改；原行程保持保存状态…"):
+            with st.spinner("正在整理局部修改；当前草案保持原状…"):
                 preview = _attempt(lambda: trip_ai.request_edit(store, token, archive, text, catalog, api_key))
             if preview:
                 st.session_state["awp_ai_preview"] = {"trip_id": archive["id"], **preview}
@@ -419,22 +617,28 @@ def _ai_editor(store, token, archive, catalog, api_key):
                             st.write("修改后：" + " → ".join(f"{_name(catalog,s['location_id'])} {s['stay_min']}分" for s in after['stops']))
                 _checks(preview["evaluation"], catalog)
                 if st.button("确认应用这些 AI 修改", key=f"awp_ai_apply_{archive['id']}"):
-                    if _attempt(lambda: store.apply_ai_operations(token, archive["id"], preview["base_revision"], preview["operations"], catalog)):
+                    def action():
+                        if archive.get("_draft"):
+                            return store.apply_draft_ai_operations(
+                                token, archive["id"], preview["base_revision"], preview["operations"], catalog)
+                        return store.apply_ai_operations(
+                            token, archive["id"], preview["base_revision"], preview["operations"], catalog)
+                    if _attempt(action):
                         st.session_state.pop("awp_ai_preview", None)
                         st.rerun()
 
 
 def render_personal_trips(store, token, catalog, api_key=""):
-    st.title("个人 Trip · 东京 1—3 日")
-    st.caption("v0.9 草案模式：按作品、日期、住宿和体力筹备；所有交通能力以核查状态为准。")
+    st.title("我的行程 · 东京 1—3 日")
+    st.caption("按作品、日期、住宿和体力建立草案；修改自动暂存，确认后保存到我的行程。交通能力以核查状态为准。")
     if current_locale() != "zh_CN":
         st.caption("Trip editor content is currently in Chinese. Switching language does not change saved data. / 旅程編集は現在中国語です。言語切替で保存データは変わりません。")
     a, b = st.columns(2)
     with a:
-        if st.button("新建个人 Trip", key="awp_new"):
+        if st.button("规划新行程", key="awp_new"):
             _open()
     with b:
-        if st.button("返回我的 Trip 列表", key="awp_list"):
+        if st.button("返回行程列表", key="awp_list"):
             st.session_state["awp_mode"] = "list"
             st.rerun()
     if not token:
@@ -442,15 +646,27 @@ def render_personal_trips(store, token, catalog, api_key=""):
     mode = st.session_state.get("awp_mode", "list")
     if mode == "new":
         _new(store, token, catalog, api_key)
+    elif mode == "draft":
+        _draft_detail(store, token, catalog, api_key)
     elif mode == "detail":
         _detail(store, token, catalog, api_key)
     else:
+        drafts = _attempt(lambda: store.list_personal_drafts(token)) if token else []
+        if drafts:
+            st.subheader("未保存草案")
+            for draft in drafts:
+                with st.container(border=True):
+                    st.write(draft["plan"]["requirements"]["title"])
+                    st.caption(f"{draft['plan']['requirements']['start_date']} · {len(draft['plan']['days'])} 日 · 最后修改 {draft['updated_at']}")
+                    if st.button("继续修改草案", key=f"awp_open_draft_{draft['id']}"):
+                        open_draft(draft["id"])
+        st.subheader("已保存的行程")
         trips = _attempt(lambda: store.list_personal_trips(token)) if token else []
         if not trips:
-            st.info("还没有个人 Trip。可从两部试点作品开始，或从已保存手册转为个人安排。")
+            st.info("还没有已保存的行程。可从两部试点作品开始，或从手册创建草案。")
         for trip in trips or []:
             with st.container(border=True):
                 st.write(trip["plan"]["requirements"]["title"])
                 st.caption(f"{trip['plan']['requirements']['start_date']} · {len(trip['plan']['days'])} 日 · 版本 {trip['revision']}")
-                if st.button("继续这份个人 Trip", key=f"awp_open_{trip['id']}"):
+                if st.button("继续这份行程", key=f"awp_open_{trip['id']}"):
                     _open(trip["id"])

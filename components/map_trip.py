@@ -11,13 +11,15 @@ def open_map(location_id):
     from core.map_explore import initial_state, navigate
     state = st.session_state.setdefault('awmap_state', initial_state())
     navigate(state, 'place', location_id=location_id)
+    st.session_state['aw_explore_view'] = '地图探索'
     st.session_state['aw_pending_tab'] = 'map'
     st.rerun()
 
 
-def open_handbook(page, **state):
+def open_handbook(page, *, return_to_map=False, **state):
     st.session_state.update(state)
-    st.session_state.update(aw_page=page, awmap_return=True, aw_pending_tab='handbook')
+    st.session_state.update(aw_page=page, awmap_return=return_to_map, aw_pending_tab='trips',
+                            aw_my_view='personal' if page == 'personal' else 'legacy')
     st.rerun()
 
 
@@ -49,16 +51,18 @@ def render_place_actions(store, token, detail, catalog):
                         st.session_state['awmap_last_trip'] = saved['id']
                         st.rerun()
                 if st.button('查看每日顺序与访问状态', key='awmap_trip_view'):
-                    open_handbook('personal', awp_mode='detail', awp_selected=target)
+                    open_handbook('personal', return_to_map=True, awp_mode='detail', awp_selected=target)
             else:
                 start = st.date_input('开始日期（日本时间）', value=today(), key='awmap_trip_date')
                 count = st.selectbox('天数', [1, 2, 3], key='awmap_trip_days')
-                if st.button('创建含此地点的 Trip 草案', key='awmap_trip_create'):
-                    plan = _attempt(lambda: map_trip_plan(lid, start.isoformat(), count, local))
-                    if plan:
-                        saved = _attempt(lambda: store.create_personal_trip(token, plan))
-                        if saved:
-                            open_handbook('personal', awp_mode='detail', awp_selected=saved['id'])
+                plan = _attempt(lambda: map_trip_plan(lid, start.isoformat(), count, local))
+                if plan:
+                    from components.trip_planner import render_draft_preview
+                    render_draft_preview(plan, local)
+                    if st.button('进入 Trip 编辑器修改草案', key='awmap_trip_create'):
+                        draft = _attempt(lambda: store.create_personal_draft(token, plan, 'map'))
+                        if draft:
+                            open_handbook('personal', return_to_map=True, awp_mode='draft', awp_draft_id=draft['id'])
             if target:
                 check = evaluate(trip['plan'], catalog, trip['events'])
                 st.caption(check['promise'])
@@ -87,6 +91,6 @@ def render_place_actions(store, token, detail, catalog):
         if entries and st.button('管理此地点的记录与照片', key='awmap_visit_photos'):
             recent = st.session_state.get('awmap_last_entry')
             selected = next((e for e in entries if e['id'] == recent), max(entries, key=lambda e: e['created_at']))
-            open_handbook('journal', awj_pending_entry=selected['id'])
+            open_handbook('journal', return_to_map=True, awj_pending_entry=selected['id'])
     if blocked(place):
         st.caption('当前访问受限；已有记录不会被自动删除或改写。')

@@ -14,7 +14,7 @@ import math
 import re
 from zoneinfo import ZoneInfo
 
-from core.trip_transport import connection, resolve_anchor, stale
+from core.trip_transport import POLICY_VERSION, connection, resolve_anchor, stale
 from core.place_links import trip_eligible
 
 
@@ -139,8 +139,10 @@ def _validate_plan(raw: dict) -> dict:
         raise ValueError("天数与每日条件不一致")
     result, seen = [], set()
     for index, raw_day in enumerate(days):
-        _keys(raw_day, {"date", "start_min", "end_min", "day_type", "start", "end", "meal_min", "break_min", "buffer_min", "stops"})
+        _keys(raw_day, {"date", "start_min", "end_min", "day_type", "start", "end", "meal_min", "break_min", "buffer_min", "return_mode", "stops"})
         day = dict(raw_day)
+        if day.get("return_mode") not in {None, "walk", "transit"}:
+            raise ValueError("回程交通方式无效")
         expected_date = (date.fromisoformat(clean["start_date"]) + timedelta(days=index)).isoformat()
         if day.get("date") != expected_date or day.get("day_type") not in {"arrival", "full"}:
             raise ValueError("每天日期必须连续，抵达日类型须明确")
@@ -156,7 +158,9 @@ def _validate_plan(raw: dict) -> dict:
             raise ValueError("每一天最多 10 个停靠地点")
         clean_stops = []
         for stop in stops:
-            _keys(stop, {"location_id", "stay_min", "locked", "priority", "visit_mode", "appointment_min"}, {"location_id", "stay_min", "locked", "priority", "visit_mode"})
+            _keys(stop, {"location_id", "stay_min", "locked", "priority", "visit_mode", "appointment_min", "leg_mode"}, {"location_id", "stay_min", "locked", "priority", "visit_mode"})
+            if stop.get("leg_mode") not in {None, "walk", "transit"}:
+                raise ValueError("到站交通方式无效")
             _ids([stop["location_id"]])
             if stop["location_id"] in seen:
                 raise ValueError("同一现实地点只安排一次停靠，多个场景在站内查看")
@@ -248,7 +252,25 @@ def _evaluate_day(day, req, catalog, events):
             issues.append(_issue("anchor_unknown", f"{label}未确认，不能声称从住宿出发或按时回到终点", day=day["date"]))
     elapsed, provisional, cursor = day["start_min"], False, start
     moving, waiting, staying, walking, meals, breaks, buffer = 0, 0, 0, 0, 0, 0, day["buffer_min"]
-    unknown_move, districts, continuous_walk = False, set(), 0
+    unknown_move, unknown_walk, districts, continuous_walk = False, False, set(), 0
+    legs, known_fare, unknown_fare = [], 0, False
+
+    def include_leg(leg):
+        nonlocal moving, waiting, walking, unknown_move, unknown_walk, known_fare, unknown_fare
+        legs.append(leg)
+        if leg["move_min"] is None or leg["wait_min"] is None:
+            unknown_move = True
+        else:
+            moving += leg["move_min"]
+            waiting += leg["wait_min"]
+        if leg["walk_m"] is None:
+            unknown_walk = True
+        else:
+            walking += leg["walk_m"]
+        if leg["fare_jpy"] is None:
+            unknown_fare = True
+        else:
+            known_fare += leg["fare_jpy"]
     pending = [s for s in day["stops"] if s["location_id"] not in terminal]
     fixed_budget = sum(s["stay_min"] for s in pending) + day["meal_min"] + day["break_min"] + buffer
     if day_events:
@@ -280,15 +302,14 @@ def _evaluate_day(day, req, catalog, events):
                         issues.append(_issue("closed_weekday", "可信开放资料显示当天休息，无法安排入内；可改日期或另核公共区域外观", severity="conflict", day=day["date"], location_id=point["id"]))
                 else:
                     issues.append(_issue("entry_unverified", "试点尚无已核验的入店开放时间／周休日数据，不能保证入内；可改为公共区域外观或核查后调整", day=day["date"], location_id=point["id"]))
-        leg = connection(cursor, point, req["mode"], catalog)
-        if leg["move_min"] is None:
-            unknown_move, provisional = True, True
-        else:
+        leg_mode = stop.get("leg_mode") or req["mode"]
+        leg = connection(cursor, point, leg_mode, catalog, day_date=day["date"],
+                         departure_min=None if unknown_move else elapsed,
+                         overridden=bool(stop.get("leg_mode")))
+        include_leg(leg)
+        if leg["move_min"] is not None and leg["wait_min"] is not None:
             elapsed += leg["move_min"] + (leg["wait_min"] or 0)
-            moving += leg["move_min"]
-            waiting += leg["wait_min"] or 0
-        provisional = provisional or not leg["exact"]
-        walking += leg["walk_m"] or 0
+        provisional = provisional or not leg["exact"] or unknown_move
         continuous_walk += leg["walk_m"] or 0
         appointment = stop["appointment_min"]
         if appointment is not None:
@@ -296,16 +317,18 @@ def _evaluate_day(day, req, catalog, events):
                 issues.append(_issue("appointment_unverified", "交通含未知／估算，无法保证预约或关闭时间；请查真实交通并保留余量", day=day["date"], location_id=stop["location_id"]))
             if elapsed > appointment:
                 issues.append(_issue("appointment_late", "预计晚于该站预约时间；请增加时间或改约", severity="review" if provisional else "conflict", day=day["date"], location_id=stop["location_id"]))
-            wait = max(0, appointment - elapsed)
-            waiting += wait
-            elapsed += wait
+            if not unknown_move:
+                wait = max(0, appointment - elapsed)
+                waiting += wait
+                elapsed += wait
         hours = ((point or {}).get("access") or {}).get("opening_hours") or {}
         if stop["visit_mode"] == "entry" and hours.get("status") == "verified" and hours.get("source_url") and not stale(hours.get("checked_at")):
             open_min, close_min = hours.get("open_min"), hours.get("close_min")
             if type(open_min) is int and type(close_min) is int and 0 <= open_min < close_min <= 1440:
-                wait = max(0, open_min - elapsed)
-                elapsed += wait
-                waiting += wait
+                if not unknown_move:
+                    wait = max(0, open_min - elapsed)
+                    elapsed += wait
+                    waiting += wait
                 if elapsed + stop["stay_min"] > close_min:
                     issues.append(_issue("closing_time", "安排无法在开放窗口内完成停留；请缩短、换日或核查实际抵达时间", severity="review" if provisional else "conflict", day=day["date"], location_id=stop["location_id"]))
         arrival = None if unknown_move else elapsed
@@ -326,15 +349,14 @@ def _evaluate_day(day, req, catalog, events):
                      "departure_min": None if unknown_move else elapsed, "provisional": provisional, "leg": leg,
                      "stop": stop, "meal_min": meal, "break_min": rest})
         cursor = point
-    return_leg = connection(cursor, end, req["mode"], catalog)
+    return_mode = day.get("return_mode") or req["mode"]
+    return_leg = connection(cursor, end, return_mode, catalog, day_date=day["date"],
+                            departure_min=None if unknown_move else elapsed,
+                            overridden=bool(day.get("return_mode")))
     if not ended:
-        if return_leg["move_min"] is None:
-            unknown_move = True
-        else:
+        include_leg(return_leg)
+        if return_leg["move_min"] is not None and return_leg["wait_min"] is not None:
             elapsed += return_leg["move_min"] + (return_leg["wait_min"] or 0)
-            moving += return_leg["move_min"]
-            waiting += return_leg["wait_min"] or 0
-        walking += return_leg["walk_m"] or 0
         elapsed += buffer
         # Empty days still reserve explicitly requested time blocks.
         if not pending:
@@ -348,10 +370,15 @@ def _evaluate_day(day, req, catalog, events):
             issues.append(_issue("walking_budget", "步行估算超过每日体力预算，请缩短路线或主动更改交通方式", day=day["date"]))
         if req["pace"] == "relaxed" and (len(districts) > 1 or day["buffer_min"] < 30 or day["break_min"] < 20):
             issues.append(_issue("pace_mismatch", "轻松偏好建议一天一个片区、至少 20 分钟休息和 30 分钟余量；当前条件偏紧", day=day["date"]))
-    return {"date": day["date"], "rows": rows, "return_leg": return_leg, "issues": issues,
+    unknown_legs = sum(leg["move_min"] is None or leg["wait_min"] is None for leg in legs)
+    return {"date": day["date"], "rows": rows, "return_leg": return_leg, "legs": legs, "issues": issues,
             "finish_min": None if unknown_move or ended else elapsed, "totals": {"moving_min": None if unknown_move else moving,
-            "waiting_min": None if unknown_move else waiting, "stay_min": staying, "meal_min": meals, "break_min": breaks,
-            "buffer_min": buffer, "walk_m": walking, "walk_complete": not unknown_move, "fare_jpy": None, "fare_status": "unknown"},
+            "waiting_min": None if unknown_move else waiting, "known_moving_min": moving,
+            "known_waiting_min": waiting, "unknown_legs": unknown_legs,
+            "stay_min": staying, "meal_min": meals, "break_min": breaks,
+            "buffer_min": buffer, "walk_m": walking, "walk_complete": not unknown_walk,
+            "known_fare_jpy": known_fare, "fare_jpy": None if unknown_fare else known_fare,
+            "fare_status": "unknown" if unknown_fare else "known"},
             "ended": ended, "next_id": pending[0]["location_id"] if pending and not ended else None}
 
 
@@ -363,7 +390,7 @@ def evaluate(plan: dict, catalog: dict, events=None, previous=None) -> dict:
     evaluated = []
     # Source changes invalidate checks; no third-party routes are cached here.
     for day in plan["days"]:
-        signature = hashlib.sha256(json.dumps([day, {k: v for k, v in req.items() if k != "title"}, catalog,
+        signature = hashlib.sha256(json.dumps([POLICY_VERSION, day, {k: v for k, v in req.items() if k != "title"}, catalog,
                                               [e for e in events if e["date"] == day["date"] or e["kind"] == "end_trip"], datetime.now(TOKYO).date().isoformat()], sort_keys=True).encode()).hexdigest()
         prior = previous.get(day["date"])
         evaluated.append(prior if prior and prior.get("signature") == signature else {**_evaluate_day(day, req, catalog, events), "signature": signature})
@@ -425,16 +452,26 @@ def edit_plan(archive: dict, operation: dict, catalog: dict, *, ai=False) -> tup
     day = next((d for d in plan["days"] if d["date"] == operation["date"]), None)
     if not day:
         raise ValueError("找不到需要编辑的日期")
+    if kind == "return_mode" and not ai:
+        if operation.get("value") not in {None, "walk", "transit"}:
+            raise ValueError("回程交通方式无效")
+        if operation.get("value") is None:
+            day.pop("return_mode", None)
+        else:
+            day["return_mode"] = operation["value"]
+        plan = validate_plan(plan)
+        preserve_execution(archive, plan)
+        return plan, "更新回程交通方式并重新评估"
     stop = next((s for s in day["stops"] if s["location_id"] == operation.get("location_id")), None)
     available = {p["id"] for p in candidates(plan, catalog)}
     if kind in {"add", "replace"} and operation.get("replacement_id") not in available:
         raise ValueError("只能引用所选作品中当前可用的可信候选 ID")
     if kind == "add":
         day["stops"].append(stop_spec(operation["replacement_id"], required=operation["replacement_id"] in plan["requirements"]["must_ids"], pace=plan["requirements"]["pace"]))
-    elif kind in {"remove", "replace", "stay", "move", "lock", "appointment", "visit_mode"}:
+    elif kind in {"remove", "replace", "stay", "move", "lock", "appointment", "visit_mode", "leg_mode"}:
         if not stop:
             raise ValueError("该站不在当天安排中")
-        if stop["locked"] and kind != "lock":
+        if stop["locked"] and kind not in {"lock", "leg_mode"}:
             raise ValueError("该站已锁定，请先人工解锁")
         if kind in {"remove", "replace"} and (stop["priority"] == "required" or stop["location_id"] in plan["requirements"]["must_ids"]):
             raise ValueError("必去项不能被静默删除，请先在需求卡中调整必去选择")
@@ -456,6 +493,13 @@ def edit_plan(archive: dict, operation: dict, catalog: dict, *, ai=False) -> tup
             stop["appointment_min"] = operation.get("value")
         elif kind == "visit_mode" and not ai:
             stop["visit_mode"] = operation.get("value")
+        elif kind == "leg_mode" and not ai:
+            if operation.get("value") not in {None, "walk", "transit"}:
+                raise ValueError("到站交通方式无效")
+            if operation.get("value") is None:
+                stop.pop("leg_mode", None)
+            else:
+                stop["leg_mode"] = operation["value"]
         else:
             raise ValueError("AI 不可修改锁定、预约或访问事实")
     elif kind in {"end_time", "meal", "break", "buffer"}:
@@ -467,7 +511,7 @@ def edit_plan(archive: dict, operation: dict, catalog: dict, *, ai=False) -> tup
     # Reordering another stop must not displace a locked stop either.
     for old_day, new_day_value in zip(archive["plan"]["days"], plan["days"]):
         for index, locked in enumerate(old_day["stops"]):
-            if locked["locked"] and not (kind == "lock" and locked["location_id"] == operation.get("location_id")):
+            if locked["locked"] and not (kind in {"lock", "leg_mode"} and locked["location_id"] == operation.get("location_id")):
                 if len(new_day_value["stops"]) <= index or new_day_value["stops"][index] != locked:
                     raise ValueError("该操作会移动或改变锁定项，请先人工解锁")
     preserve_execution(archive, plan)

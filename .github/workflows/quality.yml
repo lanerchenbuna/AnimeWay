@@ -35,7 +35,10 @@ jobs:
         run: uv run mypy
 
       - name: Compile application modules
-        run: uv run python -m compileall -q app.py assets components core data_factory scripts utils
+        run: uv run python -m compileall -q app.py assets components core data_factory scripts utils tests
+
+      - name: Run transport and Trip acceptance tests
+        run: uv run python -m unittest discover -s tests -v
 
       - name: Parse browser scripts
         run: |

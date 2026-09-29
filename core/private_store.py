@@ -392,47 +392,7 @@ class PrivateStore:
             conn.execute("DELETE FROM wishlist WHERE owner=? AND location_id=?", (owner, _identifier(location_id)))
 
     def create_trip(self, token: str, route: dict, locations: list[dict]) -> dict:
-        with self._connection() as conn:
-            owner = self._owner(conn, token)
-            if not isinstance(route, dict) or not isinstance(locations, list) or len(locations) > MAX_STOPS:
-                raise ValueError("Invalid route")
-            points = {point["id"]: point for point in (_location(item) for item in locations)}
-            if len(points) != len(locations):
-                raise ValueError("Duplicate location")
-            raw_stops = route.get("stops", route.get("location_ids", route.get("stop_ids", list(points))))
-            if not isinstance(raw_stops, list) or not 1 <= len(raw_stops) <= MAX_STOPS:
-                raise ValueError("Invalid route stops")
-            stops = []
-            for spec in raw_stops:
-                spec = {"location_id": spec} if isinstance(spec, (str, int)) else spec
-                if not isinstance(spec, dict):
-                    raise ValueError("Invalid route stop")
-                location_id = _identifier(spec.get("location_id", spec.get("id")))
-                if location_id not in points:
-                    raise ValueError("Route references a missing location")
-                stop = dict(points[location_id])
-                stop.update({key: spec[key] for key in ("required", "reason", "stay_min", "stay_max", "scene_ids", "visit_mode", "skip_if", "stay_status") if key in spec})
-                if "required" not in spec and "optional" in spec:
-                    if not isinstance(spec["optional"], bool):
-                        raise ValueError("Invalid optional")
-                    stop["required"] = not spec["optional"]
-                stops.append(stop)
-            now = _now()
-            trip = _trip({
-                "id": uuid.uuid4().hex, "title": route.get("title", route.get("name")),
-                "template_id": route.get("id"), "template_version": _version(route.get("version", ""), "template_version"),
-                "created_at": now, "updated_at": now, "revision": 1, "stops": stops,
-                "source_reviewed_at": route.get("source_reviewed_at", route.get("reviewed_at", "")) or "",
-                "unknowns": route.get("unknowns", []), "connection_status": route.get("connection_status", "unknown"),
-                "reference_notes": route.get("reference_notes", []),
-            })
-            conn.execute("BEGIN IMMEDIATE")
-            if conn.execute("SELECT count(*) FROM trips WHERE owner=?", (owner,)).fetchone()[0] >= MAX_TRIPS:
-                raise ValueError("Trip storage limit reached; export a backup before adding more")
-            conn.execute("INSERT INTO trips VALUES(?,?,?)", (owner, trip["id"], _json(trip)))
-            self._check_portable_size(conn, owner)
-            self._event(conn, owner, "adopt_route", trip["template_id"], {"stop_count": len(stops)})
-            return trip
+        raise ValueError("旧格式手册副本已停止新增；请建立个人 Trip 草案")
 
     def list_trips(self, token: str) -> list[dict]:
         with self._connection() as conn:
@@ -447,38 +407,7 @@ class PrivateStore:
             return json.loads(row["body"]) if row else None
 
     def update_trip(self, token: str, trip_id: str, expected_revision: int, *, title: str | None = None, remove_location_id: str | None = None) -> dict:
-        with self._connection() as conn:
-            owner = self._owner(conn, token)
-            conn.execute("BEGIN IMMEDIATE")
-            row = conn.execute("SELECT body FROM trips WHERE owner=? AND trip_id=?", (owner, _identifier(trip_id))).fetchone()
-            if not row:
-                raise ValueError("Trip not found")
-            trip = json.loads(row["body"])
-            if isinstance(expected_revision, bool) or not isinstance(expected_revision, int) or trip["revision"] != expected_revision:
-                raise ValueError("Trip changed in another view; reload before editing")
-            if title is not None:
-                trip["title"] = _text(title, "title", 300, empty=False)
-            if remove_location_id is not None:
-                remove_location_id = _identifier(remove_location_id)
-                stop = next((stop for stop in trip["stops"] if stop["id"] == remove_location_id), None)
-                if stop is None:
-                    raise ValueError("Stop not found")
-                if stop["required"]:
-                    raise ValueError("Required stops cannot be removed in the pilot")
-                if len(trip["stops"]) == 1:
-                    raise ValueError("A trip needs at least one stop")
-                trip["stops"] = [stop for stop in trip["stops"] if stop["id"] != remove_location_id]
-                trip["connection_status"] = "needs_recheck"
-                # No template travel time / distance is copied into personal snapshots.
-                notice = "站点已删减，剩余地点之间的连接需要重新核查；原路线耗时不再适用。"
-                if notice not in trip["unknowns"]:
-                    trip["unknowns"].append(notice)
-            trip["revision"] += 1
-            trip["updated_at"] = _now()
-            trip = _trip(trip)
-            conn.execute("UPDATE trips SET body=? WHERE owner=? AND trip_id=?", (_json(trip), owner, trip_id))
-            self._check_portable_size(conn, owner)
-            return trip
+        raise ValueError("旧格式手册副本已转为只读；请在个人 Trip 草案中修改")
 
     def delete_trip(self, token: str, trip_id: str) -> None:
         with self._connection() as conn:
@@ -486,21 +415,7 @@ class PrivateStore:
             conn.execute("DELETE FROM trips WHERE owner=? AND trip_id=?", (owner, _identifier(trip_id)))
 
     def start_trip(self, token: str, trip_id: str) -> dict:
-        with self._connection() as conn:
-            owner = self._owner(conn, token)
-            conn.execute("BEGIN IMMEDIATE")
-            row = conn.execute("SELECT body FROM trips WHERE owner=? AND trip_id=?", (owner, _identifier(trip_id))).fetchone()
-            if not row:
-                raise ValueError("Trip not found")
-            trip = json.loads(row["body"])
-            if not trip.get("started_at"):
-                trip["started_at"] = _now()
-                trip["updated_at"] = trip["started_at"]
-                trip["revision"] += 1
-                conn.execute("UPDATE trips SET body=? WHERE owner=? AND trip_id=?", (_json(trip), owner, trip_id))
-                self._check_portable_size(conn, owner)
-                self._event(conn, owner, "start_trip", trip_id)
-            return trip
+        raise ValueError("旧格式手册副本已转为只读；请使用个人 Trip 的当天模式")
 
     def export_backup(self, token: str) -> str:
         from core.trip import validate_archive

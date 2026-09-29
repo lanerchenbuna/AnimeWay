@@ -41,21 +41,21 @@ def render_legacy_transfer(store, token: str | None) -> None:
     copy = {
         "zh_CN": (
             "把临时背包转存到长期愿望清单",
-            "原背包保留用于路线预览。重复地点不会重复收藏。",
+            "原背包继续保留，行程请通过个人 Trip 草案建立。重复地点不会重复收藏。",
             "转存背包", "已新增 {added} 个收藏；{failed} 个无效地点未转存。",
         ),
         "en_US": (
             "Keep your temporary backpack in your wish list",
-            "Your backpack remains available for route previews. Existing wishes are not duplicated.",
+            "Your backpack remains available; create an itinerary through a personal Trip draft. Existing wishes are not duplicated.",
             "Save backpack", "Added {added} wishes; skipped {failed} invalid locations.",
         ),
         "ja_JP": (
             "一時バッグを行きたい場所に保存",
-            "バッグは経路プレビューに残ります。登録済みの場所は重複しません。",
+            "バッグは残ります。旅程は個人 Trip の下書きから作成してください。登録済みの場所は重複しません。",
             "バッグを保存", "{added} 件追加、無効な場所 {failed} 件は保存されませんでした。",
         ),
     }.get(locale, (
-        "Save temporary backpack", "Keep the current backpack for route previews.",
+        "Save temporary backpack", "Keep the current backpack and create a personal Trip draft.",
         "Save backpack", "Added {added}; skipped {failed}.",
     ))
     with st.expander(copy[0]):

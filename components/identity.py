@@ -61,7 +61,8 @@ def private_identity(store) -> str | None:
                 for key in list(st.session_state):
                     if key.startswith(("awp_", "awj_", "awmap_", "aw_review", "aw_pending_tab")):
                         st.session_state.pop(key, None)
-                for key in ("aw_selected_trip", "aw_selected_location", "aw_history", "aw_control_memory", "aw_view_event"):
+                for key in ("aw_selected_trip", "aw_selected_location", "aw_history", "aw_control_memory", "aw_view_event",
+                            "aw_my_view", "aw_explore_view", "aw_plan_view", "aw_active_tab"):
                     st.session_state.pop(key, None)
                 st.session_state["aw_page"] = "discover"
             token = incoming
@@ -71,7 +72,8 @@ def private_identity(store) -> str | None:
             for key in list(st.session_state):
                 if key.startswith(("awp_", "awj_", "awmap_", "aw_review", "aw_pending_tab")):
                     st.session_state.pop(key, None)
-            for key in ("aw_selected_trip", "aw_history", "aw_control_memory", "aw_view_event"):
+            for key in ("aw_selected_trip", "aw_history", "aw_control_memory", "aw_view_event",
+                        "aw_my_view", "aw_explore_view", "aw_plan_view", "aw_active_tab"):
                 st.session_state.pop(key, None)
             st.session_state["aw_page"] = "discover"
             st.session_state["_aw_invalid_identity"] = incoming

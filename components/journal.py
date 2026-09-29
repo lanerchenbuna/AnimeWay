@@ -295,7 +295,8 @@ def render_public_share(store, token, catalog, share_id):
         trip = _attempt(lambda: store.copy_share(token, share_id, start.isoformat(), catalog))
         if trip:
             st.query_params.clear()
-            st.session_state.update(aw_page="personal", awp_mode="detail", awp_selected=trip["id"])
+            st.session_state.update(aw_page="personal", awp_mode="detail", awp_selected=trip["id"],
+                                    aw_my_view="personal", aw_pending_tab="trips")
             st.rerun()
 
 
@@ -374,7 +375,7 @@ def render_rediscovery(store, token, catalog, api_key=""):
                 st.rerun()
     if st.button("我又有一次出行机会，开始筹备", key="awj_return_intent"):
         _attempt(lambda: store.record_intent(token))
-        st.session_state.update(aw_page="personal", awp_mode="new")
+        st.session_state.update(aw_page="personal", awp_mode="new", aw_pending_tab="planning")
         st.rerun()
     st.subheader("相关内容更新")
     updates = c.follow_updates(store, token, catalog)
@@ -386,7 +387,8 @@ def render_rediscovery(store, token, catalog, api_key=""):
             if st.button("查看最新地点资料", key=f"awj_update_{update['id']}"):
                 store.record_journey_event(token, "update_opened", update["object_id"], "update")
                 st.session_state["awj_origin"] = {"location_id": update["object_id"], "at": time.time()}
-                st.session_state.update(aw_page="location", aw_selected_location=update["object_id"])
+                st.session_state.update(aw_page="location", aw_selected_location=update["object_id"],
+                                        aw_explore_view="手册与地点", aw_pending_tab="explore")
                 st.rerun()
     st.subheader("尚未确认到访的相关场景")
     suggestions = store.recommend(token, catalog)
@@ -399,7 +401,8 @@ def render_rediscovery(store, token, catalog, api_key=""):
             st.caption(suggestion["reason"])
             st.caption("基础资料仍需核查，不是已验证路线推荐。" if point["content_level"] == "basic" else "已具备初步选择资料，出发前仍需核查。")
             if st.button("查看场景与访问说明", key=f"awj_recommend_open_{point['id']}"):
-                st.session_state.update(aw_page="location", aw_selected_location=point["id"])
+                st.session_state.update(aw_page="location", aw_selected_location=point["id"],
+                                        aw_explore_view="手册与地点", aw_pending_tab="explore")
                 st.rerun()
             if st.button("保存到想去清单", key=f"awj_recommend_save_{point['id']}"):
                 _attempt(lambda p=point: store.save_recommendation(token, p["id"], catalog))
@@ -443,7 +446,8 @@ def render_rediscovery(store, token, catalog, api_key=""):
         if st.button("确认建立独立 Trip 草案", disabled=not preview, key="awj_next_apply"):
             trip = _attempt(lambda: store.create_recommended_trip(token, preview, when.isoformat(), catalog))
             if trip:
-                st.session_state.update(aw_page="personal", awp_mode="detail", awp_selected=trip["id"])
+                st.session_state.update(aw_page="personal", awp_mode="detail", awp_selected=trip["id"],
+                                        aw_my_view="personal", aw_pending_tab="trips")
                 st.rerun()
     st.subheader("旅行日期相关活动")
     start = st.date_input("活动筛选开始", value=today(), key="awj_activity_start")

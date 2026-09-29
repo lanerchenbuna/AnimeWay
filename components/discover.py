@@ -14,7 +14,7 @@ from utils import amap
 from core.pilot import normalize_legacy_points
 
 
-def render_discover(agent, retriever, amap_key: str, dashscope_key: str, catalog=None, *, store=None, token=None, route_planner=None) -> None:
+def render_discover(agent, retriever, amap_key: str, dashscope_key: str, catalog=None, *, store=None, token=None) -> None:
     st.markdown(
         render_agent_intro(qwen_ready=bool(dashscope_key), amap_ready=bool(amap_key), locale=current_locale()),
         unsafe_allow_html=True,
@@ -39,21 +39,21 @@ def render_discover(agent, retriever, amap_key: str, dashscope_key: str, catalog
                     if st.button(label, key=f"example_{example_id}", width="stretch"):
                         with st.spinner(tr("searching")):
                             _handle_prompt(query, agent, dashscope_key, catalog, amap_key=amap_key,
-                                           store=store, token=token, route_planner=route_planner)
+                                           store=store, token=token)
                         st.rerun()
 
     prompt = st.chat_input(tr("chat_placeholder"))
     if prompt:
         with st.spinner(tr("searching")):
             _handle_prompt(prompt, agent, dashscope_key, catalog, amap_key=amap_key,
-                           store=store, token=token, route_planner=route_planner)
+                           store=store, token=token)
         st.rerun()
 
     _render_candidates(retriever, catalog)
     _render_search_results(amap_key, catalog)
 
 
-def _handle_prompt(prompt: str, agent, dashscope_key: str, catalog=None, *, amap_key="", store=None, token=None, route_planner=None) -> None:
+def _handle_prompt(prompt: str, agent, dashscope_key: str, catalog=None, *, amap_key="", store=None, token=None) -> None:
     history = [
         {"role": message.get("role", "user"), "content": message.get("content", "")}
         for message in st.session_state["messages"]
@@ -62,15 +62,14 @@ def _handle_prompt(prompt: str, agent, dashscope_key: str, catalog=None, *, amap
     if re.search(r"路书|规划.{0,8}(行程|路线)|安排.{0,8}(行程|巡礼)|巡礼.{0,8}(路线|行程)|生成.{0,8}(路线|行程)|行程规划", prompt):
         if not dashscope_key:
             result = {"mode": "answer", "response": "生成智能路书需要 DashScope / Qwen API Key。请在左侧 DashScope Key 中填写后，再告诉我作品、日期和旅行节奏。"}
-        elif not token or not store or not route_planner or not catalog:
-            result = {"mode": "answer", "response": "本地身份或路线服务尚未就绪，请刷新页面后重试。"}
+        elif not token or not store or not catalog:
+            result = {"mode": "answer", "response": "本地身份或地点资料尚未就绪，请刷新页面后重试。"}
         else:
             try:
                 from core.pilgrimage_agent import generate_routebook
-                with st.spinner("Qwen 正在理解需求并筛选圣地，高德正在计算分段路线…"):
+                with st.spinner("Qwen 正在筛选地点，系统正在统一评估交通与时间…"):
                     preview = generate_routebook(prompt, store=store, token=token, catalog=catalog,
-                                                 qwen_key=dashscope_key, amap_key=amap_key,
-                                                 route_planner=route_planner, locale=current_locale())
+                                                 qwen_key=dashscope_key)
                 result = {"mode": "routebook", "response": "我已经根据作品资料生成一份可核查的巡礼路书草案。你可以先查看地点、场景图和交通段，再保存为个人 Trip。",
                           "trip_preview": preview}
             except (ValueError, OSError) as exc:
@@ -187,86 +186,31 @@ def _render_chat_message(message: dict, index: int, *, store=None, token=None, c
 
 
 def _render_routebook(preview: dict, message_id: str, *, store=None, token=None, catalog=None) -> None:
-    from components.map_explorer import _scene_image
-    from components.plan import _render_map
-    from core.trip import clock, evaluate
-    from data_factory.normalization import safe_url
+    from components.map_trip import open_handbook
+    from components.trip_planner import render_draft_preview
 
     catalog = catalog or {}
-    locations = {point["id"]: point for point in catalog.get("locations", [])}
-    scenes = {scene["id"]: scene for scene in catalog.get("scenes", [])}
     plan = preview["plan"]
-    access_labels = {"public": "公共区域", "open": "可访问", "restricted": "访问受限",
-                     "unknown": "访问待核查", "closed": "暂时关闭", "prohibited": "禁止进入"}
-    st.markdown("#### ✦ AnimeWay 巡礼路书")
-    st.caption(f"{plan['requirements']['title']} · {plan['requirements']['start_date']} · {plan['requirements']['day_count']} 天 · 日本时间")
-    checks = evaluate(plan, catalog)
-    if checks["issues"]:
-        with st.expander(f"行前核查：{len(checks['issues'])} 项提醒", expanded=False):
-            for issue in checks["issues"][:12]:
-                st.write(f"{issue['date']} · {issue['message']}")
-    for day_index, day in enumerate(preview.get("days", [])):
-        st.markdown(f"### {day['date']} · {clock(day['start_min'])}—{clock(day['end_min'])}")
-        points = [locations[key] for key in day["location_ids"] if key in locations]
-        planned_stops = {stop["location_id"]: stop for stop in plan["days"][day_index]["stops"]}
-        route = day.get("route", {})
-        segments = route.get("segments", [])
-        eta = day["start_min"]
-        for number, point in enumerate(points, 1):
-            segment = segments[number - 2] if number > 1 and number - 2 < len(segments) else None
-            if segment:
-                eta += int(segment.get("duration_min", 0) or 0)
-            stay = int(planned_stops.get(point["id"], {}).get("stay_min", 25))
-            with st.container(border=True):
-                scene = next((scenes[key] for key in point.get("scene_ids", []) if key in scenes), None)
-                media, details = st.columns([1, 2.3], gap="medium")
-                with media:
-                    if scene:
-                        _scene_image(scene, width=240)
-                    else:
-                        st.caption("该地点暂无可展示的场景图")
-                with details:
-                    st.markdown(f"**{number:02d} · {point['name']}**")
-                    st.caption(f"参考到达 {clock(eta)} · 停留 {stay} 分钟")
-                    access = point.get("access") or {}
-                    status = access.get("status", "unknown")
-                    st.caption(f"{point.get('city') or '东京'} · {access_labels.get(status, '访问待核查')}")
-                    summary = access.get("summary")
-                    if summary:
-                        st.write(summary)
-                    source = safe_url(point.get("source_url"))
-                    if source:
-                        st.markdown(f"[核查地点来源 ↗]({source})")
-            eta += stay
-        st.caption("到达时间仅累计列出的站间移动与停留；起终点交通、用餐、排队及现场变化需另行确认。")
-        summary = route.get("summary", {})
-        if summary:
-            a, b, c = st.columns(3)
-            a.metric("路段距离", f"{summary.get('total_distance_km', 0)} km")
-            b.metric("移动时间", f"{summary.get('total_duration_min', 0)} 分钟")
-            c.metric("在线 / 估算", f"{summary.get('online_segments', 0)} / {summary.get('offline_segments', 0)}")
-        if len(points) > 1:
-            _render_map(points, route.get("routes", []))
-        if segments:
-            with st.expander(f"查看 {len(segments)} 段交通与导航说明"):
-                for segment in segments:
-                    steps = "；".join(segment.get("steps", [])[:4]) or "未返回详细导航步骤"
-                    status = "离线估算" if segment.get("estimated") else "高德路线"
-                    st.write(f"**{segment['index']}. {segment['from']} → {segment['to']}** · {segment['mode']} · {segment['distance_km']} km · {segment['duration_min']} 分钟 · {status}")
-                    st.caption(steps)
-    for warning in preview.get("warnings", []):
-        st.warning(warning)
+    st.markdown("#### ✦ AnimeWay 巡礼路书草案")
+    st.write(plan["requirements"]["title"])
+    render_draft_preview(plan, catalog)
     if preview.get("guide"):
-        with st.expander("路书依据与使用提醒"):
-            st.markdown(preview["guide"])
-    saved_key = "aw_agent_saved_" + message_id
-    if st.session_state.get(saved_key):
-        st.success("已保存为个人 Trip 草案")
-    elif st.button("保存为我的个人 Trip", key="aw_agent_save_" + message_id, type="primary", disabled=not store or not token):
+        st.caption(preview["guide"])
+    draft_key = "aw_agent_draft_" + message_id
+    draft_id = st.session_state.get(draft_key)
+    if draft_id and store and token and not store.get_personal_draft(token, draft_id):
+        st.session_state.pop(draft_key, None)
+        draft_id = None
+    if draft_id:
+        st.success("已加入未保存草案，可在 Trip 编辑器继续修改并正式保存。")
+        if st.button("继续修改这份草案", key="aw_agent_open_" + message_id):
+            open_handbook("personal", awp_mode="draft", awp_draft_id=draft_id)
+    elif st.button("进入行程编辑器查看与修改", key="aw_agent_draft_button_" + message_id,
+                   type="primary", disabled=not store or not token):
         try:
-            archive = store.create_personal_trip(token, plan)
-            st.session_state[saved_key] = archive["id"]
-            st.success("已保存为个人 Trip 草案")
+            draft = store.create_personal_draft(token, plan, "routebook")
+            st.session_state[draft_key] = draft["id"]
+            open_handbook("personal", awp_mode="draft", awp_draft_id=draft["id"])
         except (ValueError, OSError) as exc:
             st.error(str(exc))
 

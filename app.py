@@ -9,17 +9,17 @@ import sqlite3
 import streamlit as st
 
 from components.discover import render_discover
-from components.i18n import current_locale, tr
+from components.i18n import current_locale
 from components.identity import private_identity
 from components.legacy_transfer import render_legacy_transfer
 from components.pilgrimage import render_pilgrimage
-from components.plan import render_plan
+from components.backpack import render_backpack
 from components.map_explorer import render_map_explorer
 from components.map_runtime import map_resource, pilot_index
 from components.map_i18n import mtext
 from components.sidebar import render_sidebar
 from components.state import init_session_state
-from core.route_planner import RoutePlanner
+from components.trip_planner import render_personal_trips, render_trip_creation
 from core.private_store import PrivateStore
 from core.journal_store import JournalStore
 from core.pilot import load_pilot
@@ -80,11 +80,7 @@ def main() -> None:
 
         st.session_state["rag_agent"] = AnimeRagAgent(retriever=retriever)
         st.session_state["aw_public_resource_key"] = resource_key
-    if "route_planner" not in st.session_state:
-        st.session_state["route_planner"] = RoutePlanner()
-
     agent = st.session_state["rag_agent"]
-    route_planner = st.session_state["route_planner"]
 
     amap_key, dashscope_key = render_sidebar()
 
@@ -122,41 +118,81 @@ def main() -> None:
 
         render_public_share(store, token, catalog, st.query_params.get("share"))
         return
-    handbook_label = {
-        "zh_CN": "手册与 Trip",
-        "en_US": "Handbooks & Trips",
-        "ja_JP": "手帳と旅程",
-    }.get(locale, "手册与 Trip")
     map_enabled = os.getenv("ANIMEWAY_MAP_ENABLED", "1").lower() not in {"0", "false", "off"}
-    labels = [handbook_label, tr("nav_discover"), tr("nav_plan")] + ([mtext("title")] if map_enabled else [])
-    if "aw_agent_defaulted" not in st.session_state:
-        st.session_state["aw_active_tab"] = tr("nav_discover")
-        st.session_state["aw_agent_defaulted"] = True
+    labels = {
+        "zh_CN": ("规划行程", "探索地点", "我的行程"),
+        "en_US": ("Plan a trip", "Explore places", "My trips"),
+        "ja_JP": ("旅程を計画", "場所を探す", "自分の旅程"),
+    }.get(locale, ("规划行程", "探索地点", "我的行程"))
+    planning, exploring, my_trips = labels
     pending = st.session_state.pop("aw_pending_tab", None)
     if pending:
-        st.session_state["aw_active_tab"] = mtext("title") if pending == "map" and map_enabled else handbook_label
+        st.session_state["aw_active_tab"] = (
+            exploring if pending in {"map", "explore"}
+            else my_trips if pending in {"handbook", "trips", "personal", "journal"}
+            else planning
+        )
     if st.session_state.get("aw_active_tab") not in labels:
-        st.session_state["aw_active_tab"] = tr("nav_discover")
+        st.session_state["aw_active_tab"] = planning
     tabs = st.tabs(labels, key="aw_active_tab", on_change="rerun")
-    tab_handbook, tab_discover, tab_plan = tabs[:3]
-    if map_enabled:
-        with tabs[3]:
-            render_map_explorer(service, store, token, catalog, version, scope, fallback)
-
-    with tab_handbook:
-        if map_enabled and st.session_state.get("awmap_return"):
-            if st.button("返回地图中的地点", key="awmap_return_button"):
-                st.session_state["aw_pending_tab"] = "map"
-                st.rerun()
-        render_legacy_transfer(store, token)
-        render_pilgrimage(store, token, catalog, api_key=dashscope_key)
-
-    with tab_discover:
-        render_discover(agent, retriever, amap_key, dashscope_key, catalog,
-                        store=store, token=token, route_planner=route_planner)
-
-    with tab_plan:
-        render_plan(route_planner, amap_key, dashscope_key, catalog)
+    active = st.session_state["aw_active_tab"]
+    if active == planning:
+        with tabs[0]:
+            method = st.radio("规划方式", ["表单规划", "一句话路书"], horizontal=True, key="aw_plan_view")
+            if method == "表单规划":
+                render_trip_creation(store, token, catalog, dashscope_key)
+            else:
+                st.title("一句话规划巡礼")
+                render_discover(agent, retriever, amap_key, dashscope_key, catalog,
+                                store=store, token=token)
+    elif active == exploring:
+        with tabs[1]:
+            choices = (["地图探索"] if map_enabled else []) + ["手册与地点", "临时背包"]
+            if st.session_state.get("aw_explore_view") not in choices:
+                st.session_state["aw_explore_view"] = choices[0]
+            mode = st.radio("探索方式", choices, horizontal=True, key="aw_explore_view")
+            if mode == "地图探索":
+                render_map_explorer(service, store, token, catalog, version, scope, fallback)
+            elif mode == "手册与地点":
+                if st.session_state.get("aw_page") not in {"discover", "anime", "location", "route"}:
+                    st.session_state["aw_page"] = "discover"
+                render_pilgrimage(store, token, catalog, api_key=dashscope_key,
+                                  show_navigation=False)
+            else:
+                render_backpack(catalog, store=store, token=token)
+    else:
+        with tabs[2]:
+            if map_enabled and st.session_state.get("awmap_return"):
+                if st.button("返回地图中的地点", key="awmap_return_button"):
+                    st.session_state.update(aw_explore_view="地图探索", aw_pending_tab="map")
+                    st.rerun()
+            left, right = st.columns(2)
+            with left:
+                if st.button("我的行程", key="aw_top_my_trips", width="stretch"):
+                    st.session_state.update(aw_my_view="personal", aw_pending_tab="trips")
+                    st.rerun()
+            with right:
+                if st.button("旧资料、记录与备份", key="aw_top_legacy", width="stretch"):
+                    st.session_state.update(aw_my_view="legacy", aw_page="trips", aw_pending_tab="trips")
+                    st.rerun()
+            if st.session_state.get("aw_my_view", "personal") == "personal":
+                render_personal_trips(store, token, catalog, dashscope_key)
+            else:
+                st.caption("旧手册副本、愿望清单与记录继续可读；新安排请从规划行程开始。")
+                legacy_pages = [("旧手册副本", "trips"), ("愿望清单", "wishlist"),
+                                ("巡礼记录", "journal"), ("再次发现", "rediscovery"),
+                                ("备份与反馈", "settings")]
+                for column, (title, page) in zip(st.columns(len(legacy_pages)), legacy_pages):
+                    with column:
+                        if st.button(title, key=f"aw_secondary_{page}", width="stretch"):
+                            st.session_state.update(aw_page=page, aw_pending_tab="trips")
+                            st.rerun()
+                if st.session_state.get("aw_page") not in {"trip", "trips", "wishlist", "settings",
+                                                            "journal", "rediscovery", "personal"}:
+                    st.session_state["aw_page"] = "trips"
+                render_legacy_transfer(store, token)
+                render_pilgrimage(store, token, catalog, api_key=dashscope_key,
+                                  show_navigation=False)
 
 
 if __name__ == "__main__":

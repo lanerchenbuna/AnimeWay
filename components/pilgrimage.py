@@ -5,7 +5,6 @@ Catalog objects are never mutated; a saved trip is an independent snapshot.
 """
 from __future__ import annotations
 
-from copy import deepcopy
 import hashlib
 import inspect
 import math
@@ -35,7 +34,7 @@ def _remember_controls() -> None:
     memory = st.session_state.setdefault("aw_control_memory", {})
     for key, value in st.session_state.items():
         if key in {"aw_discovery_query", "aw_destination_filter"} or key.startswith(
-            ("aw_location_selector_", "aw_view_mode_", "aw_keep_")
+            ("aw_location_selector_", "aw_view_mode_")
         ):
             memory[key] = value
 
@@ -177,6 +176,12 @@ def _go(page: str, item_id: str | None = None) -> None:
     if old["page"] != page or (page in _SELECTION_KEYS and old.get(_SELECTION_KEYS[page]) != item_id):
         st.session_state["aw_history"] = (history + [old])[-20:]
     st.session_state["aw_page"] = page
+    if page == "personal":
+        st.session_state.update(aw_my_view="personal", aw_pending_tab="trips")
+    elif page in {"trip", "trips", "wishlist", "settings", "journal", "rediscovery"}:
+        st.session_state.update(aw_my_view="legacy", aw_pending_tab="trips")
+    else:
+        st.session_state.update(aw_explore_view="手册与地点", aw_pending_tab="explore")
     if item_id is not None and page in _SELECTION_KEYS:
         st.session_state[_SELECTION_KEYS[page]] = item_id
     st.rerun()
@@ -188,6 +193,13 @@ def _back() -> None:
     previous = history.pop() if history else {"page": "discover"}
     st.session_state["aw_history"] = history
     st.session_state["aw_page"] = previous.pop("page")
+    page = st.session_state["aw_page"]
+    if page == "personal":
+        st.session_state.update(aw_my_view="personal", aw_pending_tab="trips")
+    elif page in {"trip", "trips", "wishlist", "settings", "journal", "rediscovery"}:
+        st.session_state.update(aw_my_view="legacy", aw_pending_tab="trips")
+    else:
+        st.session_state.update(aw_explore_view="手册与地点", aw_pending_tab="explore")
     for key, value in previous.items():
         st.session_state[key] = value
     st.rerun()
@@ -530,12 +542,10 @@ def _route_page(catalog: dict, store, token, route_id: str) -> None:
             return value.get("name") or value.get("summary") or ptext("unknown")
         return str(value or ptext("unknown"))
     st.write(f"{endpoint(route.get('start'))} → {endpoint(route.get('end'))}")
-    selected_stops = []
-    forbidden = False
     for index, stop in enumerate(route.get("stops", []), 1):
         location = _item(catalog, "locations", stop["location_id"])
         if not location:
-            forbidden = True
+            st.warning(f"{index}. {stop['location_id']} · 当前地点资料缺失，转换时会列出原因")
             continue
         with st.container(border=True):
             st.markdown(f"**{index}. {location['name']}**")
@@ -543,13 +553,6 @@ def _route_page(catalog: dict, store, token, route_id: str) -> None:
             st.caption(ptext("required" if required else "optional"))
             st.write(stop.get("reason", ""))
             _stay(stop)
-            if required:
-                keep = True
-            else:
-                keep = st.checkbox(ptext("keep_stop"), value=True, key=f"aw_keep_{route_id}_{route.get('version')}_{location['id']}")
-            if keep:
-                selected_stops.append(stop)
-                forbidden = forbidden or _forbidden(location)
             if _forbidden(location):
                 st.warning(ptext("access_restricted"))
             st.caption(_access_text(location))
@@ -557,21 +560,17 @@ def _route_page(catalog: dict, store, token, route_id: str) -> None:
                 st.caption(stop["skip_if"])
             if st.button(ptext("open_location"), key=f"aw_route_location_{route_id}_{location['id']}"):
                 _go("location", location["id"])
-    removed = len(selected_stops) != len(route.get("stops", []))
-    _connection_notes({**route, "connection_status": "needs_recheck" if removed else route.get("connection_status", "unknown")})
+    _connection_notes(route)
     _unknowns(route.get("unknowns", []))
     st.caption(ptext("adoption_help"))
-    if forbidden:
-        st.warning(ptext("route_unavailable"))
-    if st.button(ptext("adopt"), type="primary", key=f"aw_adopt_{route_id}", disabled=not token or forbidden or not selected_stops):
-        personal_route = deepcopy(route)
-        personal_route["stops"] = deepcopy(selected_stops)
-        if removed:
-            personal_route["connection_status"] = "needs_recheck"
-            personal_route["unknowns"] = list(personal_route.get("unknowns", [])) + [ptext("recheck")]
-        trip = _attempt(lambda: store.create_trip(token, personal_route, catalog["locations"]))
-        if trip:
-            _go("trip", trip["id"])
+    if hasattr(store, "create_personal_draft"):
+        st.subheader("建立个人 Trip 草案")
+        from components.legacy_trip_adoption import render_legacy_conversion
+        source_items = [{**stop, "id": stop["location_id"],
+                         "name": (_item(catalog, "locations", stop["location_id"]) or {}).get("name", stop["location_id"])}
+                        for stop in route.get("stops", [])]
+        render_legacy_conversion(source_items, catalog, store, token, source="handbook",
+                                 key=f"aw_route_convert_{route_id}_{route.get('version', '')}", title=route["title"])
 
 
 def _stay(stop: dict) -> None:
@@ -659,43 +658,26 @@ def export_checklist(trip: dict, catalog: dict, *, locale: str | None = None) ->
 
 
 def _trip_page(catalog: dict, store, token, trip_id: str) -> None:
-    trip = _attempt(lambda: store.get_trip(token, trip_id)) if token else None
-    if not trip:
+    original = _attempt(lambda: store.get_trip(token, trip_id)) if token else None
+    if not original:
         st.warning(ptext("not_found"))
         return
     from core.place_links import trip_view, blocked
-    trip = trip_view(trip, catalog)
+    trip = trip_view(original, catalog)
     st.title(trip["title"])
     st.caption(ptext("personal_copy"))
-    if hasattr(store, "create_personal_trip") and st.button(ptext("convert_trip"), key=f"aw_convert_{trip_id}"):
-        from core.trip import empty_plan, new_requirements, stop_spec
-        def convert():
-            works = list(dict.fromkeys(work for stop in trip["stops"] for work in stop.get("anime_ids", [])))[:3]
-            plan = empty_plan(new_requirements("明天", 1, anime_ids=works or None, title=trip["title"]))
-            plan["requirements"]["must_ids"] = [s["id"] for s in trip["stops"] if s.get("required", True)]
-            plan["days"][0]["stops"] = [{**stop_spec(s["id"], required=s.get("required", True)),
-                                         "stay_min": s.get("stay_max") or 20} for s in trip["stops"]]
-            return store.create_personal_trip(token, plan)
-        saved = _attempt(convert)
-        if saved:
-            st.session_state["awp_selected"] = saved["id"]
-            st.session_state["awp_mode"] = "detail"
-            _go("personal")
-    title = st.text_input(ptext("trip_title"), value=trip["title"], max_chars=300, key=f"aw_trip_title_{trip_id}_{trip['revision']}")
-    if st.button(ptext("rename"), key=f"aw_rename_{trip_id}"):
-        if _attempt(lambda: store.update_trip(token, trip_id, trip["revision"], title=title)):
-            st.rerun()
+    st.info("这是历史手册副本，仅供查看和转换。请在个人 Trip 草案中修改、保存与当天使用。")
+    if hasattr(store, "create_personal_draft"):
+        with st.expander("将旧手册副本转为个人 Trip 草案"):
+            from components.legacy_trip_adoption import render_legacy_conversion
+            render_legacy_conversion(original["stops"], catalog, store, token, source="handbook",
+                                     key=f"aw_convert_{trip_id}_{trip['revision']}", title=trip["title"])
     template = _item(catalog, "routes", trip.get("template_id"))
     if template and str(template.get("version", "")) != str(trip.get("template_version", "")):
         st.info(ptext("template_updated"))
         if st.button(ptext("view_current_template"), key=f"aw_current_template_{trip_id}"):
             _go("route", template["id"])
-    if trip.get("started_at"):
-        st.success(ptext("started"))
-    elif st.button(ptext("begin"), key=f"aw_begin_{trip_id}", type="primary"):
-        if _attempt(lambda: store.start_trip(token, trip_id)):
-            st.rerun()
-    st.subheader(ptext("today"))
+    st.subheader("历史站点清单")
     _connection_notes(trip)
     if st.checkbox("查看当前地点地图", key="aw_trip_live_map"):
         points = [{"lat": s["lat"], "lon": s["lon"]} for s in trip["stops"] if not blocked(s)]
@@ -726,9 +708,6 @@ def _trip_page(catalog: dict, store, token, trip_id: str) -> None:
             _navigation(stop)
             if live and not live.get("withdrawn") and st.button(ptext("open_location"), key=f"aw_trip_location_{trip_id}_{stop['id']}"):
                 _go("location", stop["id"])
-            if not stop.get("required", True) and st.button(ptext("remove_optional"), key=f"aw_remove_stop_{trip_id}_{stop['id']}"):
-                if _attempt(lambda: store.update_trip(token, trip_id, trip["revision"], remove_location_id=stop["id"])):
-                    st.rerun()
     _unknowns(trip.get("unknowns", []))
     st.download_button(ptext("offline"), export_checklist(trip, catalog).encode("utf-8"),
                        file_name=f"animeway-checklist-{trip_id[:12]}.txt", mime="text/plain", key=f"aw_offline_{trip_id}")
@@ -817,7 +796,8 @@ def _settings_page(catalog: dict, store, token) -> None:
                 _source(url)
 
 
-def render_pilgrimage(store, token: str | None, catalog: dict | None = None, api_key: str = "") -> None:
+def render_pilgrimage(store, token: str | None, catalog: dict | None = None, api_key: str = "",
+                      *, show_navigation: bool = True) -> None:
     """Render within the application's primary tab without requiring an LLM key."""
     if catalog is None:
         try:
@@ -831,19 +811,20 @@ def render_pilgrimage(store, token: str | None, catalog: dict | None = None, api
     if "aw_pending_query" in st.session_state:
         st.session_state["aw_discovery_query"] = st.session_state.pop("aw_pending_query")
     st.session_state.setdefault("aw_page", "discover")
-    nav = st.columns(5)
-    for column, page in zip(nav, ("discover", "personal", "trips", "wishlist", "settings")):
-        with column:
-            if st.button(ptext("backup" if page == "settings" else page), key=f"aw_nav_{page}", width="stretch"):
-                _go(page)
-    if hasattr(store, "entries"):
-        left, right = st.columns(2)
-        with left:
-            if st.button("我的巡礼记录", key="aw_nav_journal", width="stretch"):
-                _go("journal")
-        with right:
-            if st.button("下一次巡礼", key="aw_nav_rediscovery", width="stretch"):
-                _go("rediscovery")
+    if show_navigation:
+        nav = st.columns(5)
+        for column, page in zip(nav, ("discover", "personal", "trips", "wishlist", "settings")):
+            with column:
+                if st.button(ptext("backup" if page == "settings" else page), key=f"aw_nav_{page}", width="stretch"):
+                    _go(page)
+        if hasattr(store, "entries"):
+            left, right = st.columns(2)
+            with left:
+                if st.button("我的巡礼记录", key="aw_nav_journal", width="stretch"):
+                    _go("journal")
+            with right:
+                if st.button("下一次巡礼", key="aw_nav_rediscovery", width="stretch"):
+                    _go("rediscovery")
     if not token:
         st.info(ptext("identity_pending"))
     flash = st.session_state.pop("aw_flash", "")

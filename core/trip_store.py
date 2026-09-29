@@ -11,6 +11,115 @@ from core.trip import MAX_HISTORY, TOKYO, edit_plan, evaluate, preserve_executio
 
 
 class TripStore(PrivateStore):
+    MAX_DRAFTS = 8
+    DRAFT_SOURCES = {"manual", "routebook", "map", "handbook", "backpack"}
+
+    def __init__(self, path=None):
+        super().__init__(path)
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            conn.execute("""CREATE TABLE IF NOT EXISTS personal_trip_drafts (
+                owner TEXT NOT NULL REFERENCES identities(owner),
+                draft_id TEXT NOT NULL, revision INTEGER NOT NULL,
+                source TEXT NOT NULL, body TEXT NOT NULL, updated_at TEXT NOT NULL,
+                PRIMARY KEY(owner,draft_id))""")
+
+    def list_personal_drafts(self, token):
+        with self._connection() as conn:
+            owner = self._owner(conn, token)
+            return [{"id": row["draft_id"], "revision": row["revision"],
+                     "source": row["source"], "plan": json.loads(row["body"]),
+                     "updated_at": row["updated_at"]}
+                    for row in conn.execute("SELECT * FROM personal_trip_drafts WHERE owner=? ORDER BY updated_at DESC", (owner,))]
+
+    def get_personal_draft(self, token, draft_id):
+        with self._connection() as conn:
+            owner = self._owner(conn, token)
+            row = conn.execute("SELECT * FROM personal_trip_drafts WHERE owner=? AND draft_id=?",
+                               (owner, _identifier(draft_id))).fetchone()
+            return ({"id": row["draft_id"], "revision": row["revision"],
+                     "source": row["source"], "plan": json.loads(row["body"]),
+                     "updated_at": row["updated_at"]} if row else None)
+
+    def create_personal_draft(self, token, plan, source="manual"):
+        if source not in self.DRAFT_SOURCES:
+            raise ValueError("未知的 Trip 草案来源")
+        clean = validate_plan(plan)
+        draft_id, now = uuid.uuid4().hex, _now()
+        with self._connection() as conn:
+            owner = self._owner(conn, token)
+            conn.execute("BEGIN IMMEDIATE")
+            if conn.execute("SELECT count(*) FROM personal_trip_drafts WHERE owner=?", (owner,)).fetchone()[0] >= self.MAX_DRAFTS:
+                raise ValueError("未保存草案已达上限，请先保存或删除旧草案")
+            conn.execute("INSERT INTO personal_trip_drafts VALUES(?,?,?,?,?,?)",
+                         (owner, draft_id, 1, source, _json(clean), now))
+        return {"id": draft_id, "revision": 1, "source": source, "plan": clean, "updated_at": now}
+
+    def edit_personal_draft(self, token, draft_id, revision, operation, catalog):
+        with self._connection() as conn:
+            owner = self._owner(conn, token)
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute("SELECT * FROM personal_trip_drafts WHERE owner=? AND draft_id=?",
+                               (owner, _identifier(draft_id))).fetchone()
+            if not row:
+                raise ValueError("找不到此草案，请从草案列表重新打开")
+            if type(revision) is not int or revision != row["revision"]:
+                raise ValueError("草案已在另一页面更新，请重新载入后操作")
+            plan, _ = edit_plan({"plan": json.loads(row["body"]), "state": "draft", "events": []},
+                                operation, catalog)
+            now = _now()
+            conn.execute("UPDATE personal_trip_drafts SET body=?,revision=?,updated_at=? WHERE owner=? AND draft_id=?",
+                         (_json(plan), revision + 1, now, owner, draft_id))
+        return {"id": draft_id, "revision": revision + 1, "source": row["source"],
+                "plan": plan, "updated_at": now}
+
+    def apply_draft_ai_operations(self, token, draft_id, revision, operations, catalog):
+        if not isinstance(operations, list) or not 1 <= len(operations) <= 3:
+            raise ValueError("每次最多三项局部修改")
+        with self._connection() as conn:
+            owner = self._owner(conn, token)
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute("SELECT * FROM personal_trip_drafts WHERE owner=? AND draft_id=?",
+                               (owner, _identifier(draft_id))).fetchone()
+            if not row or type(revision) is not int or row["revision"] != revision:
+                raise ValueError("草案已变化，请重新载入后应用 AI 修改")
+            archive = {"plan": json.loads(row["body"]), "state": "draft", "events": []}
+            for operation in operations:
+                archive["plan"], _ = edit_plan(archive, operation, catalog, ai=True)
+            now = _now()
+            conn.execute("UPDATE personal_trip_drafts SET body=?,revision=?,updated_at=? WHERE owner=? AND draft_id=?",
+                         (_json(archive["plan"]), revision + 1, now, owner, draft_id))
+        return {"id": draft_id, "revision": revision + 1, "source": row["source"],
+                "plan": archive["plan"], "updated_at": now}
+
+    def commit_personal_draft(self, token, draft_id, revision):
+        now = _now()
+        with self._connection() as conn:
+            owner = self._owner(conn, token)
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute("SELECT revision,body FROM personal_trip_drafts WHERE owner=? AND draft_id=?",
+                               (owner, _identifier(draft_id))).fetchone()
+            if not row or type(revision) is not int or row["revision"] != revision:
+                raise ValueError("草案已变化，请重新载入后保存")
+            if conn.execute("SELECT count(*) FROM personal_trips WHERE owner=?", (owner,)).fetchone()[0] >= MAX_TRIPS:
+                raise ValueError("个人 Trip 数量已达上限，请先备份并删除不再使用的行程")
+            archive = validate_archive({"id": draft_id, "revision": 1,
+                                        "created_at": now, "updated_at": now, "state": "draft",
+                                        "plan": json.loads(row["body"]), "history": [], "events": []})
+            conn.execute("INSERT INTO personal_trips VALUES(?,?,?)", (owner, archive["id"], _json(archive)))
+            self._check_portable_size(conn, owner)
+            conn.execute("DELETE FROM personal_trip_drafts WHERE owner=? AND draft_id=?", (owner, draft_id))
+        return archive
+
+    def discard_personal_draft(self, token, draft_id, revision):
+        with self._connection() as conn:
+            owner = self._owner(conn, token)
+            conn.execute("BEGIN IMMEDIATE")
+            cursor = conn.execute("DELETE FROM personal_trip_drafts WHERE owner=? AND draft_id=? AND revision=?",
+                                  (owner, _identifier(draft_id), revision))
+            if not cursor.rowcount:
+                raise ValueError("草案已变化，请重新载入后操作")
+
     def list_personal_trips(self, token):
         with self._connection() as conn:
             owner = self._owner(conn, token)

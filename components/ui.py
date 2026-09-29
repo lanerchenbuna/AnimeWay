@@ -65,17 +65,17 @@ def render_agent_intro(*, qwen_ready: bool, amap_ready: bool, locale: str = "zh_
         "zh_CN": (
             "东京精选 · 智能巡礼", "从喜欢的动画，走进真实的街道。",
             "说出作品、日期和旅行节奏。AnimeWay 会找到有来源的圣地，安排每天的顺序，并给出可核查的路书。",
-            "提出想法", "查看地点与路线", "保存个人 Trip", "已连接", "待连接", "在左侧连接 Qwen 和高德，即可生成带在线路线的路书。",
+            "提出想法", "查看地点与路线", "保存个人 Trip", "已连接", "未配置", "Qwen 用于可选 AI 路书；高德只补充地点地址。东京公共交通仍需外部核查。",
         ),
         "en_US": (
             "Tokyo pilot · Anime pilgrimage", "From a favorite story to a real journey.",
             "Tell us the title, date and pace. AnimeWay finds sourced places and creates a routebook you can review.",
-            "Describe your trip", "Review places and routes", "Save your Trip", "Connected", "Connect a key", "Connect Qwen and AMap in the sidebar to create a routebook with live routes.",
+            "Describe your trip", "Review places and routes", "Save your Trip", "Connected", "Not configured", "Qwen is optional for AI routebooks; AMap only supplements place addresses. Check Tokyo transit externally.",
         ),
         "ja_JP": (
             "東京の聖地 · 巡礼プラン", "好きな物語から、実際の街へ。",
             "作品、日付、旅のペースを伝えると、出典のある場所を探して確認できる旅程を作ります。",
-            "希望を伝える", "場所と経路を確認", "旅程を保存", "接続済み", "未接続", "左側で Qwen と高徳地図を接続すると、オンライン経路付きの旅程を作れます。",
+            "希望を伝える", "場所と経路を確認", "旅程を保存", "接続済み", "未設定", "Qwen は任意の AI 旅程、高徳地図は住所補完用です。東京の公共交通は外部で確認してください。",
         ),
     }
     hero_uri = html.escape(_asset_data_uri("assets/images/animeway-hero.webp"), quote=True)
@@ -90,7 +90,7 @@ def render_agent_intro(*, qwen_ready: bool, amap_ready: bool, locale: str = "zh_
     <p>{html.escape(description)}</p>
     <div class="agent-intro__services" aria-label="API 状态">
       <span class="{'is-ready' if qwen_ready else 'is-pending'}">Qwen · {qwen_status}</span>
-      <span class="{'is-ready' if amap_ready else 'is-pending'}">高德路线 · {amap_status}</span>
+      <span class="{'is-ready' if amap_ready else 'is-pending'}">高德地点补充 · {amap_status}</span>
     </div>
   </div>
 </section>
