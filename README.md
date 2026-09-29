@@ -1,8 +1,45 @@
+<div align="center">
+
+<p><code>ANIME PILGRIMAGE NAVIGATOR · 聖地巡礼</code></p>
+
 # AnimeWay · 二次元圣地巡礼
+
+### 穿过次元壁，抵达故事发生的地方。
+
+<img src="assets/images/animeway-hero.webp" width="100%" alt="AnimeWay 二次元圣地巡礼主视觉">
+
+<br><br>
+
+![Python 3.10–3.13](https://img.shields.io/badge/Python-3.10--3.13-68E1FD?style=flat-square&labelColor=111630)
+![Streamlit](https://img.shields.io/badge/Streamlit-App-FF70A6?style=flat-square&labelColor=111630)
+![Local search](https://img.shields.io/badge/Local_Search-No_AI_Key-69F0AE?style=flat-square&labelColor=111630)
+![Code License](https://img.shields.io/badge/Code_License-MIT-9B7BFF?style=flat-square&labelColor=111630)
+
+</div>
 
 AnimeWay 将作品与地点发现、东京精选手册和个人 Trip 接成一条流程：**选作品与时间 → 查看草案 → 修改 → 保存 → 当天使用**。表单、自然语言路书、地图、手册与临时背包最终进入同一个 Trip 编辑器；交通和时间由同一套规则评估。
 
 当前是东京试点，支持 1—3 日行程。短途步行仅给出带说明的估算；东京公交／铁路尚无已验收的在线路线提供方，时间与费用保持“待核查”。真实用户、手机设备和现场试走仍需验收，因此项目不标记为公开发布就绪。完整范围见[验证状态](docs/validation.md)。
+
+[快速开始](#快速开始) · [界面预览](#界面预览) · [使用流程](#使用流程) · [架构说明](docs/architecture.md) · [部署与维护](docs/operations.md)
+
+## 界面预览
+
+下方保留了项目原有的搜索与地点探索演示。截图拍摄于三入口导航调整前，展示的是历史界面；当前操作入口以本页的使用流程为准。
+
+<img src="docs/media/animeway-flow.gif" width="100%" alt="AnimeWay 搜索作品、浏览地点与查看地点详情的操作演示">
+
+| 作品搜索入口 | 作品搜索结果 |
+|---|---|
+| ![作品搜索入口](docs/media/agent-home.webp) | ![作品搜索结果](docs/media/work-search.webp) |
+
+| 地点列表 | 地点详情 |
+|---|---|
+| ![地点列表](docs/media/place-list.webp) | ![地点详情](docs/media/place-detail.webp) |
+
+<p align="center"><img src="docs/media/mobile-home.webp" width="270" alt="手机宽度下的历史首页界面"><br><small>手机宽度示意；新界面仍需真实设备验收。</small></p>
+
+截图中的作品封面由 Bangumi 实时提供，权利属于各自权利人；场景图片的展示依据仍须逐项核对。
 
 ## 快速开始
 
