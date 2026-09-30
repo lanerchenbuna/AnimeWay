@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "version": "tokyo-pilot-2026-09-10",
-  "updated_at": "2026-09-10",
+  "version": "tokyo-pilot-2026-09-30",
+  "updated_at": "2026-09-30",
   "scope": "Tokyo pilot only",
   "anime": [
     {
@@ -122,6 +122,149 @@
         "loc-tokyo-suga-stairs",
         "loc-tokyo-shinanomachi-bridge",
         "loc-tokyo-shinjuku-south"
+      ]
+    },
+    {
+      "id": "296659",
+      "name": "Love Live! 虹咲学园校园偶像同好会",
+      "cn": "Love Live! 虹咲学园校园偶像同好会",
+      "jp": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "aliases": [
+        "虹咲",
+        "Nijigasaki"
+      ],
+      "version": "TV 动画",
+      "summary": "台场海滨与公共步道的桌面筛选点位；场景画面仍待独立比对。",
+      "source_url": "https://anitabi.cn/map?bangumiId=296659",
+      "scene_ids": [
+        "scene-296659-062eaaefd725",
+        "scene-296659-9d970de18e95",
+        "scene-296659-becee1bd4234",
+        "scene-296659-adcd57fce19f",
+        "scene-296659-c5cac34ae631",
+        "scene-296659-ed896923e921"
+      ],
+      "representative_location_ids": [
+        "loc-tokyo-odaiba-seaside",
+        "loc-tokyo-odaiba-deck",
+        "loc-tokyo-odaiba-central"
+      ]
+    },
+    {
+      "id": "387803",
+      "name": "江户前精灵",
+      "cn": "江户前精灵",
+      "jp": "江戸前エルフ",
+      "aliases": [
+        "Edomae Elf"
+      ],
+      "version": "TV 动画",
+      "summary": "佃与月岛公共街面及神社外部参照；不把店铺内部当成默认可进入区域。",
+      "source_url": "https://anitabi.cn/map?bangumiId=387803",
+      "scene_ids": [
+        "scene-387803-4bdfa14efd45",
+        "scene-387803-2a27b10df1e4",
+        "scene-387803-0fd0b11729bd",
+        "scene-387803-fb71cc51d42d",
+        "scene-387803-b3612d355634",
+        "scene-387803-da3b054b670c",
+        "scene-387803-579f813d6550"
+      ],
+      "representative_location_ids": [
+        "loc-tokyo-tsukuda-bridge",
+        "loc-tokyo-tsukishima-nishinaka",
+        "loc-tokyo-tsukiji-namiyoke"
+      ]
+    },
+    {
+      "id": "428735",
+      "name": "BanG Dream! It's MyGO!!!!!",
+      "cn": "BanG Dream! It's MyGO!!!!!",
+      "jp": "BanG Dream! It's MyGO!!!!!",
+      "aliases": [
+        "MyGO",
+        "MyGO!!!!!"
+      ],
+      "version": "TV 动画",
+      "summary": "池袋站外与区立公园；同一公园的多镜头归并。",
+      "source_url": "https://anitabi.cn/map?bangumiId=428735",
+      "scene_ids": [
+        "scene-428735-99ca83a85aaf",
+        "scene-428735-e4864ab94dfd",
+        "scene-428735-16a16ac9b93c",
+        "scene-428735-e875e9c62978",
+        "scene-428735-2e80932353f5"
+      ],
+      "representative_location_ids": [
+        "loc-tokyo-ikebukuro-east-exit",
+        "loc-tokyo-higashi-ikebukuro-park",
+        "loc-tokyo-higashi-ikebukuro-central-park"
+      ]
+    },
+    {
+      "id": "369304",
+      "name": "咒术回战 第二季",
+      "cn": "咒术回战 第二季",
+      "jp": "呪術廻戦 第2期",
+      "aliases": [
+        "咒术回战 涩谷事变",
+        "Jujutsu Kaisen Season 2"
+      ],
+      "version": "TV 动画",
+      "summary": "仅选涩谷站外广场公共区域；施工与人流会改变可观察条件。",
+      "source_url": "https://anitabi.cn/map?bangumiId=369304",
+      "scene_ids": [
+        "scene-369304-54125245779d",
+        "scene-369304-abedd1654438"
+      ],
+      "representative_location_ids": [
+        "loc-tokyo-shibuya-hachiko",
+        "loc-tokyo-shibuya-east-exit"
+      ]
+    },
+    {
+      "id": "2463",
+      "name": "无头骑士异闻录",
+      "cn": "无头骑士异闻录",
+      "jp": "デュラララ!!",
+      "aliases": [
+        "Durarara!!"
+      ],
+      "version": "TV 动画",
+      "summary": "池袋现存区立公园的公共区域；旧作品场景和现状尚未独立复核。",
+      "source_url": "https://anitabi.cn/map?bangumiId=2463",
+      "scene_ids": [
+        "scene-2463-12d1208a53c2",
+        "scene-2463-d56b7f061c16",
+        "scene-2463-e03c34d796e2",
+        "scene-2463-77818927c6ee"
+      ],
+      "representative_location_ids": [
+        "loc-tokyo-higashi-ikebukuro-central-park",
+        "loc-tokyo-minami-ikebukuro-park",
+        "loc-tokyo-ikebukuro-west-park"
+      ]
+    },
+    {
+      "id": "306742",
+      "name": "Love Live! Superstar!!",
+      "cn": "Love Live! Superstar!!",
+      "jp": "ラブライブ！スーパースター!!",
+      "aliases": [
+        "Liella!"
+      ],
+      "version": "TV 动画",
+      "summary": "代代木公园与原宿站外公共区域；具体场景机位未独立核验。",
+      "source_url": "https://anitabi.cn/map?bangumiId=306742",
+      "scene_ids": [
+        "scene-306742-14d331cf9690",
+        "scene-306742-23cb002542e7",
+        "scene-306742-3356e0af0aee"
+      ],
+      "representative_location_ids": [
+        "loc-tokyo-yoyogi-event-square",
+        "loc-tokyo-yoyogi-keyaki",
+        "loc-tokyo-harajuku-station-east"
       ]
     }
   ],
@@ -4344,6 +4487,1345 @@
         }
       ],
       "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-odaiba-seaside",
+      "name": "お台場海浜公園",
+      "lat": 35.6304,
+      "lon": 139.7755,
+      "city": "东京都",
+      "destination_id": "odaiba",
+      "anime_ids": [
+        "296659"
+      ],
+      "scene_ids": [
+        "scene-296659-062eaaefd725"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=296659",
+      "source_ids": [
+        "anitabi-296659",
+        "odaiba-seaside"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "296659",
+          "record_id": "062eaaefd725b72a2f95b6fc2c2e39b893c9119b",
+          "source_url": "https://anitabi.cn/map?bangumiId=296659",
+          "source_snapshot": "2026-07-24",
+          "original_city": "东京都",
+          "original_name": "お台場海浜公園",
+          "lat": 35.6304,
+          "lon": 139.7755
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "公园公共区域；水域、活动区和临时围挡按现场指示。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.tptc.co.jp/park/01_02/point",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.tptc.co.jp/park/01_02/point",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-odaiba-deck",
+      "name": "お台場海浜公園 展望デッキ",
+      "lat": 35.6276,
+      "lon": 139.7713,
+      "city": "东京都",
+      "destination_id": "odaiba",
+      "anime_ids": [
+        "296659"
+      ],
+      "scene_ids": [
+        "scene-296659-9d970de18e95"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=296659",
+      "source_ids": [
+        "anitabi-296659",
+        "odaiba-seaside"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "296659",
+          "record_id": "9d970de18e9576273a5c12ebbe69e9dbc68e6bc3",
+          "source_url": "https://anitabi.cn/map?bangumiId=296659",
+          "source_snapshot": "2026-07-24",
+          "original_city": "东京都",
+          "original_name": "お台場海浜公園 展望デッキ",
+          "lat": 35.6276,
+          "lon": 139.7713
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "展望平台区域；演出或活动时以现场管制为准。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.tptc.co.jp/park/01_02/point",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.tptc.co.jp/park/01_02/point",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-odaiba-central",
+      "name": "セントラル広場",
+      "lat": 35.6235,
+      "lon": 139.7747,
+      "city": "东京都",
+      "destination_id": "odaiba",
+      "anime_ids": [
+        "296659"
+      ],
+      "scene_ids": [
+        "scene-296659-becee1bd4234"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=296659",
+      "source_ids": [
+        "anitabi-296659",
+        "odaiba-promenade"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "296659",
+          "record_id": "becee1bd4234259347ce2406c21df06d3da1190d",
+          "source_url": "https://anitabi.cn/map?bangumiId=296659",
+          "source_snapshot": "2026-07-24",
+          "original_city": "东京都",
+          "original_name": "セントラル広場",
+          "lat": 35.6235,
+          "lon": 139.7747
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "广场可能举办活动；只在允许的公共区域停留。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.tptc.co.jp/park/01_04/point",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.tptc.co.jp/park/01_04/point",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-odaiba-dream-square",
+      "name": "夢の広場",
+      "lat": 35.6274,
+      "lon": 139.7819,
+      "city": "东京都",
+      "destination_id": "odaiba",
+      "anime_ids": [
+        "296659"
+      ],
+      "scene_ids": [
+        "scene-296659-adcd57fce19f"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=296659",
+      "source_ids": [
+        "anitabi-296659",
+        "odaiba-promenade"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "296659",
+          "record_id": "adcd57fce19f141abdacae25c6b46ab0852deb79",
+          "source_url": "https://anitabi.cn/map?bangumiId=296659",
+          "source_snapshot": "2026-07-24",
+          "original_city": "东京都",
+          "original_name": "夢の広場",
+          "lat": 35.6274,
+          "lon": 139.7819
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "广场可能举办活动；不占用活动或施工区域。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.tptc.co.jp/park/01_04/point",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.tptc.co.jp/park/01_04/point",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-odaiba-dream-bridge",
+      "name": "夢の大橋",
+      "lat": 35.6286,
+      "lon": 139.7841,
+      "city": "东京都",
+      "destination_id": "odaiba",
+      "anime_ids": [
+        "296659"
+      ],
+      "scene_ids": [
+        "scene-296659-c5cac34ae631"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=296659",
+      "source_ids": [
+        "anitabi-296659",
+        "odaiba-promenade"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "296659",
+          "record_id": "c5cac34ae63103f88b7a195f49827c6cd7e06246",
+          "source_url": "https://anitabi.cn/map?bangumiId=296659",
+          "source_snapshot": "2026-07-24",
+          "original_city": "东京都",
+          "original_name": "夢の大橋",
+          "lat": 35.6286,
+          "lon": 139.7841
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "步行桥；活动及临时封闭信息出发前复查。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.tptc.co.jp/park/01_04/point",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.tptc.co.jp/park/01_04/point",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-odaiba-water",
+      "name": "水の広場公園",
+      "lat": 35.6292,
+      "lon": 139.7907,
+      "city": "东京都",
+      "destination_id": "odaiba",
+      "anime_ids": [
+        "296659"
+      ],
+      "scene_ids": [
+        "scene-296659-ed896923e921"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=296659",
+      "source_ids": [
+        "anitabi-296659",
+        "odaiba-water"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "296659",
+          "record_id": "ed896923e921da1c8951431749055bc95ae5ad36",
+          "source_url": "https://anitabi.cn/map?bangumiId=296659",
+          "source_snapshot": "2026-07-24",
+          "original_city": "东京都",
+          "original_name": "水の広場公園",
+          "lat": 35.6292,
+          "lon": 139.7907
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "公园范围较大；来源点位不等于唯一入口，按现场通道走。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.tptc.co.jp/park/02_04",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.tptc.co.jp/park/02_04",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-tsukuda-bridge",
+      "name": "佃小橋",
+      "lat": 35.6673,
+      "lon": 139.7833,
+      "city": "东京都",
+      "destination_id": "tsukishima",
+      "anime_ids": [
+        "387803"
+      ],
+      "scene_ids": [
+        "scene-387803-4bdfa14efd45",
+        "scene-387803-2a27b10df1e4",
+        "scene-387803-0fd0b11729bd",
+        "scene-387803-fb71cc51d42d",
+        "scene-387803-b3612d355634"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=387803",
+      "source_ids": [
+        "anitabi-387803",
+        "tsukuda-bridge"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "387803",
+          "record_id": "4bdfa14efd45b9b912922c77f20126c43cd6940e",
+          "source_url": "https://anitabi.cn/map?bangumiId=387803",
+          "source_snapshot": "2026-07-24",
+          "original_city": "中央区",
+          "original_name": "第01話　佃小橋上",
+          "lat": 35.6673,
+          "lon": 139.7833
+        },
+        {
+          "provider": "anitabi",
+          "anime_id": "387803",
+          "record_id": "2a27b10df1e43c5a6ffa9439181e751fdfead2c2",
+          "source_url": "https://anitabi.cn/map?bangumiId=387803",
+          "source_snapshot": "2026-07-24",
+          "original_city": "中央区",
+          "original_name": "第01話　佃小橋端",
+          "lat": 35.6672,
+          "lon": 139.7834
+        },
+        {
+          "provider": "anitabi",
+          "anime_id": "387803",
+          "record_id": "0fd0b11729bdfd3811007b87d6d570253c9136dc",
+          "source_url": "https://anitabi.cn/map?bangumiId=387803",
+          "source_snapshot": "2026-07-24",
+          "original_city": "中央区",
+          "original_name": "第03話　佃小橋からの夜町並み",
+          "lat": 35.6673,
+          "lon": 139.7832
+        },
+        {
+          "provider": "anitabi",
+          "anime_id": "387803",
+          "record_id": "fb71cc51d42dfe484d51d93f33ffaa2b5b8788ec",
+          "source_url": "https://anitabi.cn/map?bangumiId=387803",
+          "source_snapshot": "2026-07-24",
+          "original_city": "中央区",
+          "original_name": "第07話　佃小橋を走って帰る小柚子ちゃん",
+          "lat": 35.667,
+          "lon": 139.7833
+        },
+        {
+          "provider": "anitabi",
+          "anime_id": "387803",
+          "record_id": "b3612d35563405a126db8129483bce2069992b02",
+          "source_url": "https://anitabi.cn/map?bangumiId=387803",
+          "source_snapshot": "2026-07-24",
+          "original_city": "中央区",
+          "original_name": "第07話　夕暮れの佃小橋",
+          "lat": 35.6672,
+          "lon": 139.7834
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "桥上正常通行优先；不在狭窄处架设器材或阻挡居民。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.city.chuo.lg.jp/a0037/shisetsu/genre/sonota/sonota00060.html",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.city.chuo.lg.jp/a0037/shisetsu/genre/sonota/sonota00060.html",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-tsukishima-nishinaka",
+      "name": "月島西仲通り三番街",
+      "lat": 35.6636,
+      "lon": 139.7814,
+      "city": "东京都",
+      "destination_id": "tsukishima",
+      "anime_ids": [
+        "387803"
+      ],
+      "scene_ids": [
+        "scene-387803-da3b054b670c"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=387803",
+      "source_ids": [
+        "anitabi-387803",
+        "tsukishima-street"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "387803",
+          "record_id": "da3b054b670c07ca5a8854a508587ad66aef0caa",
+          "source_url": "https://anitabi.cn/map?bangumiId=387803",
+          "source_snapshot": "2026-07-24",
+          "original_city": "中央区",
+          "original_name": "第02話他　月島西仲通り三番街",
+          "lat": 35.6636,
+          "lon": 139.7814
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "商店街公共街面；店内、住户门前及拍摄规则另行确认。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.city.chuo.lg.jp/documents/5126/tukishima.pdf",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.city.chuo.lg.jp/documents/5126/tukishima.pdf",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-tsukiji-namiyoke",
+      "name": "波除神社",
+      "lat": 35.6634,
+      "lon": 139.7715,
+      "city": "东京都",
+      "destination_id": "tsukishima",
+      "anime_ids": [
+        "387803"
+      ],
+      "scene_ids": [
+        "scene-387803-579f813d6550"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=387803",
+      "source_ids": [
+        "anitabi-387803",
+        "namiyoke-shrine"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "387803",
+          "record_id": "579f813d6550837b6d847ffdcf47b756d60e2619",
+          "source_url": "https://anitabi.cn/map?bangumiId=387803",
+          "source_snapshot": "2026-07-24",
+          "original_city": "中央区",
+          "original_name": "波除神社",
+          "lat": 35.6634,
+          "lon": 139.7715
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "神社参拜与拍摄按现场告示；坐标不构成进入建筑许可。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.namiyoke.or.jp/index.php",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.namiyoke.or.jp/index.php",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-ikebukuro-east-exit",
+      "name": "池袋駅東口駅前",
+      "lat": 35.7296,
+      "lon": 139.7122,
+      "city": "东京都",
+      "destination_id": "ikebukuro",
+      "anime_ids": [
+        "428735"
+      ],
+      "scene_ids": [
+        "scene-428735-99ca83a85aaf"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=428735",
+      "source_ids": [
+        "anitabi-428735",
+        "ikebukuro-station"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "428735",
+          "record_id": "99ca83a85aaffe66764369b50e0f0d89ddbde48d",
+          "source_url": "https://anitabi.cn/map?bangumiId=428735",
+          "source_snapshot": "2026-07-24",
+          "original_city": "丰岛区",
+          "original_name": "池袋駅東口",
+          "lat": 35.7296,
+          "lon": 139.7122
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "仅公共站前空间；闸内和商业设施另按运营规则。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.jreast.co.jp/estation/station/info.aspx?StationCD=108",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.jreast.co.jp/estation/station/info.aspx?StationCD=108",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-higashi-ikebukuro-park",
+      "name": "東池袋公園",
+      "lat": 35.7316,
+      "lon": 139.7175,
+      "city": "东京都",
+      "destination_id": "ikebukuro",
+      "anime_ids": [
+        "428735"
+      ],
+      "scene_ids": [
+        "scene-428735-e4864ab94dfd"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=428735",
+      "source_ids": [
+        "anitabi-428735",
+        "higashi-ikebukuro-park"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "428735",
+          "record_id": "e4864ab94dfd11460112a7545bf68ddac8e96e6a",
+          "source_url": "https://anitabi.cn/map?bangumiId=428735",
+          "source_snapshot": "2026-07-24",
+          "original_city": "丰岛区",
+          "original_name": "東池袋公園",
+          "lat": 35.7316,
+          "lon": 139.7175
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "区立公园；儿童活动及居民使用优先。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/023.html",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/023.html",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-higashi-ikebukuro-central-park",
+      "name": "東池袋中央公園",
+      "lat": 35.7301,
+      "lon": 139.7186,
+      "city": "东京都",
+      "destination_id": "ikebukuro",
+      "anime_ids": [
+        "428735",
+        "2463"
+      ],
+      "scene_ids": [
+        "scene-428735-16a16ac9b93c",
+        "scene-428735-e875e9c62978",
+        "scene-2463-77818927c6ee"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=428735",
+      "source_ids": [
+        "anitabi-428735",
+        "higashi-central-park",
+        "anitabi-2463"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "428735",
+          "record_id": "16a16ac9b93c65d0e4276b61ab404e8396ba563f",
+          "source_url": "https://anitabi.cn/map?bangumiId=428735",
+          "source_snapshot": "2026-07-24",
+          "original_city": "丰岛区",
+          "original_name": "豊島区立東池袋中央公園",
+          "lat": 35.7301,
+          "lon": 139.7186
+        },
+        {
+          "provider": "anitabi",
+          "anime_id": "428735",
+          "record_id": "e875e9c62978c38fed53f34799750fffe9d4ecb6",
+          "source_url": "https://anitabi.cn/map?bangumiId=428735",
+          "source_snapshot": "2026-07-24",
+          "original_city": "丰岛区",
+          "original_name": "豊島区立東池袋中央公園",
+          "lat": 35.7301,
+          "lon": 139.7185
+        },
+        {
+          "provider": "anitabi",
+          "anime_id": "2463",
+          "record_id": "77818927c6eeb711b879f1a8af1d5cbefcd2a66b",
+          "source_url": "https://anitabi.cn/map?bangumiId=2463",
+          "source_snapshot": "2026-07-24",
+          "original_city": "丰岛区",
+          "original_name": "東池袋中央公園",
+          "lat": 35.73,
+          "lon": 139.7186
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "区立公园；同一实体地点承载多作品与多个来源场景。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/022.html",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/022.html",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        },
+        {
+          "date": "2026-09-30",
+          "summary": "与《无头骑士异闻录》来源记录合并为同一现实公园。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-minami-ikebukuro-second-park",
+      "name": "南池袋第二公園",
+      "lat": 35.7223,
+      "lon": 139.7171,
+      "city": "东京都",
+      "destination_id": "ikebukuro",
+      "anime_ids": [
+        "428735"
+      ],
+      "scene_ids": [
+        "scene-428735-2e80932353f5"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=428735",
+      "source_ids": [
+        "anitabi-428735",
+        "minami-second-park"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "428735",
+          "record_id": "2e80932353f511e2c9967ea365e8822a93950ae3",
+          "source_url": "https://anitabi.cn/map?bangumiId=428735",
+          "source_snapshot": "2026-07-24",
+          "original_city": "丰岛区",
+          "original_name": "豊島区立南池袋第二公園",
+          "lat": 35.7223,
+          "lon": 139.7171
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "小型区立公园；居民与儿童使用优先。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/028.html",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/028.html",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-shibuya-hachiko",
+      "name": "渋谷駅ハチ公前広場",
+      "lat": 35.6592,
+      "lon": 139.7008,
+      "city": "东京都",
+      "destination_id": "shibuya",
+      "anime_ids": [
+        "369304"
+      ],
+      "scene_ids": [
+        "scene-369304-54125245779d"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=369304",
+      "source_ids": [
+        "anitabi-369304",
+        "shibuya-square",
+        "shibuya-filming"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "369304",
+          "record_id": "54125245779d8a9d957755a1a2d6c5a5f93169a6",
+          "source_url": "https://anitabi.cn/map?bangumiId=369304",
+          "source_snapshot": "2026-07-24",
+          "original_city": "涩谷区",
+          "original_name": "ハチ公前広場",
+          "lat": 35.6592,
+          "lon": 139.7008
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "仅正常通行与短暂停留；拍摄活动应先核对警察与区方要求。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.city.shibuya.tokyo.jp/kankyo/doro-kasen/doro-shinsei/senyo.html",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.city.shibuya.tokyo.jp/kankyo/doro-kasen/doro-jorei/kudo_tushomei.html",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-shibuya-east-exit",
+      "name": "渋谷駅東口広場",
+      "lat": 35.6587,
+      "lon": 139.7022,
+      "city": "东京都",
+      "destination_id": "shibuya",
+      "anime_ids": [
+        "369304"
+      ],
+      "scene_ids": [
+        "scene-369304-abedd1654438"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=369304",
+      "source_ids": [
+        "anitabi-369304",
+        "shibuya-square"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "369304",
+          "record_id": "abedd1654438d621b0e031b114946be690a6fb30",
+          "source_url": "https://anitabi.cn/map?bangumiId=369304",
+          "source_snapshot": "2026-07-24",
+          "original_city": "涩谷区",
+          "original_name": "渋谷駅東口",
+          "lat": 35.6587,
+          "lon": 139.7022
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "站前改建与动线可能变化；不把来源点坐标当作可固定的机位。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.city.shibuya.tokyo.jp/kankyo/doro-kasen/doro-jorei/kudo_tushomei.html",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.city.shibuya.tokyo.jp/kankyo/doro-kasen/doro-jorei/kudo_tushomei.html",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-minami-ikebukuro-park",
+      "name": "南池袋公園",
+      "lat": 35.7275,
+      "lon": 139.7144,
+      "city": "东京都",
+      "destination_id": "ikebukuro",
+      "anime_ids": [
+        "2463"
+      ],
+      "scene_ids": [
+        "scene-2463-12d1208a53c2"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=2463",
+      "source_ids": [
+        "anitabi-2463",
+        "minami-ikebukuro-park"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "2463",
+          "record_id": "12d1208a53c2ce2a2c0385b081d8b0fa9681757f",
+          "source_url": "https://anitabi.cn/map?bangumiId=2463",
+          "source_snapshot": "2026-07-24",
+          "original_city": "丰岛区",
+          "original_name": "南池袋公園",
+          "lat": 35.7275,
+          "lon": 139.7144
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "区立公园可能有开放时段与活动；临行核对官方页面。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/026.html",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/026.html",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-ikebukuro-west-park",
+      "name": "池袋西口公園",
+      "lat": 35.7303,
+      "lon": 139.7092,
+      "city": "东京都",
+      "destination_id": "ikebukuro",
+      "anime_ids": [
+        "2463"
+      ],
+      "scene_ids": [
+        "scene-2463-d56b7f061c16"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=2463",
+      "source_ids": [
+        "anitabi-2463",
+        "ikebukuro-west-park"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "2463",
+          "record_id": "d56b7f061c16f3f7dcfa981c27c2521a596388f5",
+          "source_url": "https://anitabi.cn/map?bangumiId=2463",
+          "source_snapshot": "2026-07-24",
+          "original_city": "丰岛区",
+          "original_name": "池袋西口公園",
+          "lat": 35.7303,
+          "lon": 139.7092
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "广场可能举办活动；老作品场景与现状不保证一致。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.city.toshima.lg.jp/340/miryoku/shiru/koen/nishiguchi.html",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.city.toshima.lg.jp/340/miryoku/shiru/koen/nishiguchi.html",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-ikebukuro-station-front-park",
+      "name": "池袋駅前公園",
+      "lat": 35.7329,
+      "lon": 139.7132,
+      "city": "东京都",
+      "destination_id": "ikebukuro",
+      "anime_ids": [
+        "2463"
+      ],
+      "scene_ids": [
+        "scene-2463-e03c34d796e2"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=2463",
+      "source_ids": [
+        "anitabi-2463",
+        "ikebukuro-station-front-park"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "2463",
+          "record_id": "e03c34d796e230fc11a13b5015d79d310234319d",
+          "source_url": "https://anitabi.cn/map?bangumiId=2463",
+          "source_snapshot": "2026-07-24",
+          "original_city": "丰岛区",
+          "original_name": "池袋駅前公園",
+          "lat": 35.7329,
+          "lon": 139.7132
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "区立公园；不阻挡居民及通行。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/021.html",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/021.html",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-yoyogi-event-square",
+      "name": "代々木公園イベント広場",
+      "lat": 35.6673,
+      "lon": 139.6967,
+      "city": "东京都",
+      "destination_id": "harajuku",
+      "anime_ids": [
+        "306742"
+      ],
+      "scene_ids": [
+        "scene-306742-14d331cf9690"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=306742",
+      "source_ids": [
+        "anitabi-306742",
+        "yoyogi-park"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "306742",
+          "record_id": "14d331cf9690d766f884a35b45cf283458557e77",
+          "source_url": "https://anitabi.cn/map?bangumiId=306742",
+          "source_snapshot": "2026-07-24",
+          "original_city": "涩谷区",
+          "original_name": "代々木公園イベント広場",
+          "lat": 35.6673,
+          "lon": 139.6967
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "活动广场使用可能受赛事、布展和临时管理影响。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.tokyo-park.or.jp/park/yoyogi/facility/index.html",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.tokyo-park.or.jp/park/yoyogi/facility/index.html",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-yoyogi-keyaki",
+      "name": "代々木公園ケヤキ並木",
+      "lat": 35.666,
+      "lon": 139.6981,
+      "city": "东京都",
+      "destination_id": "harajuku",
+      "anime_ids": [
+        "306742"
+      ],
+      "scene_ids": [
+        "scene-306742-23cb002542e7"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=306742",
+      "source_ids": [
+        "anitabi-306742",
+        "yoyogi-park"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "306742",
+          "record_id": "23cb002542e788e82f3865961abc61e0dafbf794",
+          "source_url": "https://anitabi.cn/map?bangumiId=306742",
+          "source_snapshot": "2026-07-24",
+          "original_city": "涩谷区",
+          "original_name": "代々木公園ケヤキ並木",
+          "lat": 35.666,
+          "lon": 139.6981
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "林荫道正常通行优先；不占用活动设施。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.tokyo-park.or.jp/park/yoyogi/facility/index.html",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.tokyo-park.or.jp/park/yoyogi/facility/index.html",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
+    },
+    {
+      "id": "loc-tokyo-harajuku-station-east",
+      "name": "原宿駅东侧公共街面",
+      "lat": 35.6699,
+      "lon": 139.7027,
+      "city": "东京都",
+      "destination_id": "harajuku",
+      "anime_ids": [
+        "306742"
+      ],
+      "scene_ids": [
+        "scene-306742-3356e0af0aee"
+      ],
+      "source_url": "https://anitabi.cn/map?bangumiId=306742",
+      "source_ids": [
+        "anitabi-306742",
+        "harajuku-station"
+      ],
+      "reviewed_at": "2026-09-30",
+      "content_level": "basic",
+      "upstream": [
+        {
+          "provider": "anitabi",
+          "anime_id": "306742",
+          "record_id": "3356e0af0aee5a83812c637cf600e6868b6f2f8a",
+          "source_url": "https://anitabi.cn/map?bangumiId=306742",
+          "source_snapshot": "2026-07-24",
+          "original_city": "涩谷区",
+          "original_name": "原宿駅東口",
+          "lat": 35.6699,
+          "lon": 139.7027
+        }
+      ],
+      "aliases": [],
+      "access": {
+        "summary": "来源称“东口”，JR 官方使用表参道口等名称；仅将坐标附近公共街面纳入，不宣称有官方东口。 出发前复查官方说明与现场告示。",
+        "status": "unknown",
+        "source_url": "https://www.jreast.co.jp/estation/station/info.aspx?StationCd=1256",
+        "checked_at": "2026-09-30",
+        "hours": null,
+        "fees": null
+      },
+      "viewpoint": "来源坐标用于定位现实地点，未独立核实原作对应机位；只能从允许停留的公共区域观察。",
+      "entry": "按现场标识使用公共入口；闸内、店内、封闭区域及活动区不因本条目而开放。",
+      "geography": {
+        "status": "desk_reviewed",
+        "scope": "东京具体设施或公共街面；来源点坐标未验证为入口或机位",
+        "method": "逐条核对本地 Anitabi 快照点位名称、坐标和运营方／区方设施资料；不使用作品主城市替代逐点归属",
+        "source_url": "https://www.jreast.co.jp/estation/station/info.aspx?StationCd=1256",
+        "checked_at": "2026-09-30"
+      },
+      "withdrawn": false,
+      "change_log": [
+        {
+          "date": "2026-09-30",
+          "summary": "新增东京桌面筛选地点；访问与画面机位仍待现场核查。"
+        }
+      ],
+      "source_version": 1
     }
   ],
   "scenes": [
@@ -6630,6 +8112,816 @@
       },
       "real_media": [],
       "checked_at": null
+    },
+    {
+      "id": "scene-296659-062eaaefd725",
+      "anime_id": "296659",
+      "location_id": "loc-tokyo-odaiba-seaside",
+      "title": "お台場海浜公園 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=296659",
+      "source_ids": [
+        "anitabi-296659"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "062eaaefd725b72a2f95b6fc2c2e39b893c9119b",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=296659",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-296659-9d970de18e95",
+      "anime_id": "296659",
+      "location_id": "loc-tokyo-odaiba-deck",
+      "title": "お台場海浜公園 展望デッキ · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=296659",
+      "source_ids": [
+        "anitabi-296659"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "9d970de18e9576273a5c12ebbe69e9dbc68e6bc3",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=296659",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-296659-becee1bd4234",
+      "anime_id": "296659",
+      "location_id": "loc-tokyo-odaiba-central",
+      "title": "セントラル広場 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=296659",
+      "source_ids": [
+        "anitabi-296659"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "becee1bd4234259347ce2406c21df06d3da1190d",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=296659",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-296659-adcd57fce19f",
+      "anime_id": "296659",
+      "location_id": "loc-tokyo-odaiba-dream-square",
+      "title": "夢の広場 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=296659",
+      "source_ids": [
+        "anitabi-296659"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "adcd57fce19f141abdacae25c6b46ab0852deb79",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=296659",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-296659-c5cac34ae631",
+      "anime_id": "296659",
+      "location_id": "loc-tokyo-odaiba-dream-bridge",
+      "title": "夢の大橋 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=296659",
+      "source_ids": [
+        "anitabi-296659"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "c5cac34ae63103f88b7a195f49827c6cd7e06246",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=296659",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-296659-ed896923e921",
+      "anime_id": "296659",
+      "location_id": "loc-tokyo-odaiba-water",
+      "title": "水の広場公園 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=296659",
+      "source_ids": [
+        "anitabi-296659"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "ed896923e921da1c8951431749055bc95ae5ad36",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=296659",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-387803-4bdfa14efd45",
+      "anime_id": "387803",
+      "location_id": "loc-tokyo-tsukuda-bridge",
+      "title": "第01話　佃小橋上 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=387803",
+      "source_ids": [
+        "anitabi-387803"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "4bdfa14efd45b9b912922c77f20126c43cd6940e",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=387803",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-387803-2a27b10df1e4",
+      "anime_id": "387803",
+      "location_id": "loc-tokyo-tsukuda-bridge",
+      "title": "第01話　佃小橋端 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=387803",
+      "source_ids": [
+        "anitabi-387803"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "2a27b10df1e43c5a6ffa9439181e751fdfead2c2",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=387803",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-387803-0fd0b11729bd",
+      "anime_id": "387803",
+      "location_id": "loc-tokyo-tsukuda-bridge",
+      "title": "第03話　佃小橋からの夜町並み · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=387803",
+      "source_ids": [
+        "anitabi-387803"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "0fd0b11729bdfd3811007b87d6d570253c9136dc",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=387803",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-387803-fb71cc51d42d",
+      "anime_id": "387803",
+      "location_id": "loc-tokyo-tsukuda-bridge",
+      "title": "第07話　佃小橋を走って帰る小柚子ちゃん · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=387803",
+      "source_ids": [
+        "anitabi-387803"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "fb71cc51d42dfe484d51d93f33ffaa2b5b8788ec",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=387803",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-387803-b3612d355634",
+      "anime_id": "387803",
+      "location_id": "loc-tokyo-tsukuda-bridge",
+      "title": "第07話　夕暮れの佃小橋 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=387803",
+      "source_ids": [
+        "anitabi-387803"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "b3612d35563405a126db8129483bce2069992b02",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=387803",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-387803-da3b054b670c",
+      "anime_id": "387803",
+      "location_id": "loc-tokyo-tsukishima-nishinaka",
+      "title": "第02話他　月島西仲通り三番街 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=387803",
+      "source_ids": [
+        "anitabi-387803"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "da3b054b670c07ca5a8854a508587ad66aef0caa",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=387803",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-387803-579f813d6550",
+      "anime_id": "387803",
+      "location_id": "loc-tokyo-tsukiji-namiyoke",
+      "title": "波除神社 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=387803",
+      "source_ids": [
+        "anitabi-387803"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "579f813d6550837b6d847ffdcf47b756d60e2619",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=387803",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-428735-99ca83a85aaf",
+      "anime_id": "428735",
+      "location_id": "loc-tokyo-ikebukuro-east-exit",
+      "title": "池袋駅東口 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=428735",
+      "source_ids": [
+        "anitabi-428735"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "99ca83a85aaffe66764369b50e0f0d89ddbde48d",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=428735",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-428735-e4864ab94dfd",
+      "anime_id": "428735",
+      "location_id": "loc-tokyo-higashi-ikebukuro-park",
+      "title": "東池袋公園 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=428735",
+      "source_ids": [
+        "anitabi-428735"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "e4864ab94dfd11460112a7545bf68ddac8e96e6a",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=428735",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-428735-16a16ac9b93c",
+      "anime_id": "428735",
+      "location_id": "loc-tokyo-higashi-ikebukuro-central-park",
+      "title": "豊島区立東池袋中央公園 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=428735",
+      "source_ids": [
+        "anitabi-428735"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "16a16ac9b93c65d0e4276b61ab404e8396ba563f",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=428735",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-428735-e875e9c62978",
+      "anime_id": "428735",
+      "location_id": "loc-tokyo-higashi-ikebukuro-central-park",
+      "title": "豊島区立東池袋中央公園 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=428735",
+      "source_ids": [
+        "anitabi-428735"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "e875e9c62978c38fed53f34799750fffe9d4ecb6",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=428735",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-428735-2e80932353f5",
+      "anime_id": "428735",
+      "location_id": "loc-tokyo-minami-ikebukuro-second-park",
+      "title": "豊島区立南池袋第二公園 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=428735",
+      "source_ids": [
+        "anitabi-428735"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "2e80932353f511e2c9967ea365e8822a93950ae3",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=428735",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-369304-54125245779d",
+      "anime_id": "369304",
+      "location_id": "loc-tokyo-shibuya-hachiko",
+      "title": "ハチ公前広場 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=369304",
+      "source_ids": [
+        "anitabi-369304"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "54125245779d8a9d957755a1a2d6c5a5f93169a6",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=369304",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-369304-abedd1654438",
+      "anime_id": "369304",
+      "location_id": "loc-tokyo-shibuya-east-exit",
+      "title": "渋谷駅東口 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=369304",
+      "source_ids": [
+        "anitabi-369304"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "abedd1654438d621b0e031b114946be690a6fb30",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=369304",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-2463-12d1208a53c2",
+      "anime_id": "2463",
+      "location_id": "loc-tokyo-minami-ikebukuro-park",
+      "title": "南池袋公園 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=2463",
+      "source_ids": [
+        "anitabi-2463"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "12d1208a53c2ce2a2c0385b081d8b0fa9681757f",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=2463",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-2463-d56b7f061c16",
+      "anime_id": "2463",
+      "location_id": "loc-tokyo-ikebukuro-west-park",
+      "title": "池袋西口公園 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=2463",
+      "source_ids": [
+        "anitabi-2463"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "d56b7f061c16f3f7dcfa981c27c2521a596388f5",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=2463",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-2463-e03c34d796e2",
+      "anime_id": "2463",
+      "location_id": "loc-tokyo-ikebukuro-station-front-park",
+      "title": "池袋駅前公園 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=2463",
+      "source_ids": [
+        "anitabi-2463"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "e03c34d796e230fc11a13b5015d79d310234319d",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=2463",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-306742-14d331cf9690",
+      "anime_id": "306742",
+      "location_id": "loc-tokyo-yoyogi-event-square",
+      "title": "代々木公園イベント広場 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=306742",
+      "source_ids": [
+        "anitabi-306742"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "14d331cf9690d766f884a35b45cf283458557e77",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=306742",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-306742-23cb002542e7",
+      "anime_id": "306742",
+      "location_id": "loc-tokyo-yoyogi-keyaki",
+      "title": "代々木公園ケヤキ並木 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=306742",
+      "source_ids": [
+        "anitabi-306742"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "23cb002542e788e82f3865961abc61e0dafbf794",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=306742",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-306742-3356e0af0aee",
+      "anime_id": "306742",
+      "location_id": "loc-tokyo-harajuku-station-east",
+      "title": "原宿駅東口 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=306742",
+      "source_ids": [
+        "anitabi-306742"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "3356e0af0aee5a83812c637cf600e6868b6f2f8a",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=306742",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
+    },
+    {
+      "id": "scene-2463-77818927c6ee",
+      "anime_id": "2463",
+      "location_id": "loc-tokyo-higashi-ikebukuro-central-park",
+      "title": "東池袋中央公園 · 来源关联场景",
+      "episode": null,
+      "timecode": null,
+      "source_url": "https://anitabi.cn/map?bangumiId=2463",
+      "source_ids": [
+        "anitabi-2463"
+      ],
+      "match_status": "community_reported",
+      "match_summary": "Anitabi 社区标注；未独立比对原作，集数和机位不作确认。",
+      "upstream_record_id": "77818927c6eeb711b879f1a8af1d5cbefcd2a66b",
+      "spoiler_level": "unspecified",
+      "media": {
+        "url": "",
+        "reference_url": "",
+        "type": "original_frame_unverified",
+        "display_allowed": false,
+        "download_allowed": false,
+        "share_allowed": false,
+        "attribution": "Anitabi 社区；单张素材来源及权利待核验",
+        "source_url": "https://anitabi.cn/map?bangumiId=2463",
+        "rights_status": "origin_and_permissions_pending",
+        "checked_at": "2026-09-30"
+      },
+      "real_media": [],
+      "checked_at": "2026-09-30"
     }
   ],
   "routes": [
@@ -7057,6 +9349,441 @@
         "allowed_use": "可保存和编辑个人原型草案；尚不是通过公开发布验收的重点路线"
       },
       "deletion_policy": "可删站移除后，两侧新连接必须重新标为待核查；不沿用旧总耗时。"
+    },
+    {
+      "id": "route-odaiba-baywalk",
+      "title": "台场湾岸：虹咲公共空间散步",
+      "anime_ids": [
+        "296659"
+      ],
+      "destination_id": "odaiba",
+      "version": 1,
+      "summary": "以海滨公园和公共步道串联《虹咲》来源场景；区域跨度较大，请按体力删站。",
+      "reason": "以已核对名称的公共地点组织手动可编辑草案；站间连接仍待核查。",
+      "start": "お台場海浜公園公共区域",
+      "end": "夢の大橋东侧公共区域",
+      "status": "prototype",
+      "reviewed_at": "2026-09-30",
+      "owner": "AnimeWay 项目维护者（现场核验负责人待定）",
+      "duration_hint": "总耗时未知；请根据当天活动、交通与休息安排调整。",
+      "duration_status": "unknown",
+      "unknowns": [
+        "来源场景未独立对照原作，具体机位未知。",
+        "站间连接和总耗时未现场核实。",
+        "开放、施工、拍摄规则需要出发前与现场复查。",
+        "尚无真实用户验证或实地试走记录。"
+      ],
+      "stops": [
+        {
+          "location_id": "loc-tokyo-odaiba-seaside",
+          "scene_ids": [
+            "scene-296659-062eaaefd725"
+          ],
+          "required": true,
+          "reason": "路线起点，先确认公共入口与当天动线。",
+          "stay_min": 5,
+          "stay_max": 15,
+          "stay_status": "editorial_suggestion",
+          "visit_mode": "public_exterior",
+          "skip_if": "封闭、活动占用、现场规则不允许停留或人流拥挤时跳过"
+        },
+        {
+          "location_id": "loc-tokyo-odaiba-deck",
+          "scene_ids": [
+            "scene-296659-9d970de18e95"
+          ],
+          "required": false,
+          "reason": "同片区可选来源场景；不便进入时直接删去。",
+          "stay_min": 5,
+          "stay_max": 15,
+          "stay_status": "editorial_suggestion",
+          "visit_mode": "public_exterior",
+          "skip_if": "封闭、活动占用、现场规则不允许停留或人流拥挤时跳过"
+        },
+        {
+          "location_id": "loc-tokyo-odaiba-central",
+          "scene_ids": [
+            "scene-296659-becee1bd4234"
+          ],
+          "required": false,
+          "reason": "同片区可选来源场景；不便进入时直接删去。",
+          "stay_min": 5,
+          "stay_max": 15,
+          "stay_status": "editorial_suggestion",
+          "visit_mode": "public_exterior",
+          "skip_if": "封闭、活动占用、现场规则不允许停留或人流拥挤时跳过"
+        },
+        {
+          "location_id": "loc-tokyo-odaiba-dream-square",
+          "scene_ids": [
+            "scene-296659-adcd57fce19f"
+          ],
+          "required": false,
+          "reason": "同片区可选来源场景；不便进入时直接删去。",
+          "stay_min": 5,
+          "stay_max": 15,
+          "stay_status": "editorial_suggestion",
+          "visit_mode": "public_exterior",
+          "skip_if": "封闭、活动占用、现场规则不允许停留或人流拥挤时跳过"
+        },
+        {
+          "location_id": "loc-tokyo-odaiba-dream-bridge",
+          "scene_ids": [
+            "scene-296659-c5cac34ae631"
+          ],
+          "required": false,
+          "reason": "同片区可选来源场景；不便进入时直接删去。",
+          "stay_min": 5,
+          "stay_max": 15,
+          "stay_status": "editorial_suggestion",
+          "visit_mode": "public_exterior",
+          "skip_if": "封闭、活动占用、现场规则不允许停留或人流拥挤时跳过"
+        }
+      ],
+      "connections": [
+        {
+          "from_location_id": "loc-tokyo-odaiba-seaside",
+          "to_location_id": "loc-tokyo-odaiba-deck",
+          "status": "unverified",
+          "duration_min": null,
+          "distance_m": null,
+          "source_url": null,
+          "checked_at": null
+        },
+        {
+          "from_location_id": "loc-tokyo-odaiba-deck",
+          "to_location_id": "loc-tokyo-odaiba-central",
+          "status": "unverified",
+          "duration_min": null,
+          "distance_m": null,
+          "source_url": null,
+          "checked_at": null
+        },
+        {
+          "from_location_id": "loc-tokyo-odaiba-central",
+          "to_location_id": "loc-tokyo-odaiba-dream-square",
+          "status": "unverified",
+          "duration_min": null,
+          "distance_m": null,
+          "source_url": null,
+          "checked_at": null
+        },
+        {
+          "from_location_id": "loc-tokyo-odaiba-dream-square",
+          "to_location_id": "loc-tokyo-odaiba-dream-bridge",
+          "status": "unverified",
+          "duration_min": null,
+          "distance_m": null,
+          "source_url": null,
+          "checked_at": null
+        }
+      ],
+      "walking_facts": [],
+      "publication": {
+        "content_ready": false,
+        "field_verified": false,
+        "user_validated": false,
+        "blockers": [
+          "画面、访问和步行连接尚未完成独立及现场核验"
+        ],
+        "allowed_use": "可保存和编辑个人原型草案；不宣称为已验收的推荐路线"
+      },
+      "deletion_policy": "删站后新相邻连接仍标为待核查；不得沿用总耗时。"
+    },
+    {
+      "id": "route-tsukishima-edomae",
+      "title": "佃・月岛：《江户前精灵》公共街面",
+      "anime_ids": [
+        "387803"
+      ],
+      "destination_id": "tsukishima",
+      "version": 1,
+      "summary": "先看佃小桥，再到月岛商店街；只使用允许停留的公共街面。",
+      "reason": "以已核对名称的公共地点组织手动可编辑草案；站间连接仍待核查。",
+      "start": "佃小橋",
+      "end": "月島西仲通り三番街",
+      "status": "prototype",
+      "reviewed_at": "2026-09-30",
+      "owner": "AnimeWay 项目维护者（现场核验负责人待定）",
+      "duration_hint": "总耗时未知；请根据当天活动、交通与休息安排调整。",
+      "duration_status": "unknown",
+      "unknowns": [
+        "来源场景未独立对照原作，具体机位未知。",
+        "站间连接和总耗时未现场核实。",
+        "开放、施工、拍摄规则需要出发前与现场复查。",
+        "尚无真实用户验证或实地试走记录。"
+      ],
+      "stops": [
+        {
+          "location_id": "loc-tokyo-tsukuda-bridge",
+          "scene_ids": [
+            "scene-387803-4bdfa14efd45",
+            "scene-387803-2a27b10df1e4",
+            "scene-387803-0fd0b11729bd",
+            "scene-387803-fb71cc51d42d",
+            "scene-387803-b3612d355634"
+          ],
+          "required": true,
+          "reason": "路线起点，先确认公共入口与当天动线。",
+          "stay_min": 5,
+          "stay_max": 15,
+          "stay_status": "editorial_suggestion",
+          "visit_mode": "public_exterior",
+          "skip_if": "封闭、活动占用、现场规则不允许停留或人流拥挤时跳过"
+        },
+        {
+          "location_id": "loc-tokyo-tsukishima-nishinaka",
+          "scene_ids": [
+            "scene-387803-da3b054b670c"
+          ],
+          "required": false,
+          "reason": "同片区可选来源场景；不便进入时直接删去。",
+          "stay_min": 5,
+          "stay_max": 15,
+          "stay_status": "editorial_suggestion",
+          "visit_mode": "public_exterior",
+          "skip_if": "封闭、活动占用、现场规则不允许停留或人流拥挤时跳过"
+        }
+      ],
+      "connections": [
+        {
+          "from_location_id": "loc-tokyo-tsukuda-bridge",
+          "to_location_id": "loc-tokyo-tsukishima-nishinaka",
+          "status": "unverified",
+          "duration_min": null,
+          "distance_m": null,
+          "source_url": null,
+          "checked_at": null
+        }
+      ],
+      "walking_facts": [],
+      "publication": {
+        "content_ready": false,
+        "field_verified": false,
+        "user_validated": false,
+        "blockers": [
+          "画面、访问和步行连接尚未完成独立及现场核验"
+        ],
+        "allowed_use": "可保存和编辑个人原型草案；不宣称为已验收的推荐路线"
+      },
+      "deletion_policy": "删站后新相邻连接仍标为待核查；不得沿用总耗时。"
+    },
+    {
+      "id": "route-ikebukuro-parks",
+      "title": "池袋：MyGO!!!!! 与无头骑士公园选点",
+      "anime_ids": [
+        "428735",
+        "2463"
+      ],
+      "destination_id": "ikebukuro",
+      "version": 1,
+      "summary": "从池袋站外出发，经两部作品共用的公园，再按兴趣选择其他区立公园。",
+      "reason": "以已核对名称的公共地点组织手动可编辑草案；站间连接仍待核查。",
+      "start": "池袋站东侧公共街面",
+      "end": "池袋駅前公園",
+      "status": "prototype",
+      "reviewed_at": "2026-09-30",
+      "owner": "AnimeWay 项目维护者（现场核验负责人待定）",
+      "duration_hint": "总耗时未知；请根据当天活动、交通与休息安排调整。",
+      "duration_status": "unknown",
+      "unknowns": [
+        "来源场景未独立对照原作，具体机位未知。",
+        "站间连接和总耗时未现场核实。",
+        "开放、施工、拍摄规则需要出发前与现场复查。",
+        "尚无真实用户验证或实地试走记录。"
+      ],
+      "stops": [
+        {
+          "location_id": "loc-tokyo-ikebukuro-east-exit",
+          "scene_ids": [
+            "scene-428735-99ca83a85aaf"
+          ],
+          "required": true,
+          "reason": "路线起点，先确认公共入口与当天动线。",
+          "stay_min": 5,
+          "stay_max": 15,
+          "stay_status": "editorial_suggestion",
+          "visit_mode": "public_exterior",
+          "skip_if": "封闭、活动占用、现场规则不允许停留或人流拥挤时跳过"
+        },
+        {
+          "location_id": "loc-tokyo-higashi-ikebukuro-central-park",
+          "scene_ids": [
+            "scene-428735-16a16ac9b93c",
+            "scene-428735-e875e9c62978",
+            "scene-2463-77818927c6ee"
+          ],
+          "required": false,
+          "reason": "同片区可选来源场景；不便进入时直接删去。",
+          "stay_min": 5,
+          "stay_max": 15,
+          "stay_status": "editorial_suggestion",
+          "visit_mode": "public_exterior",
+          "skip_if": "封闭、活动占用、现场规则不允许停留或人流拥挤时跳过"
+        },
+        {
+          "location_id": "loc-tokyo-higashi-ikebukuro-park",
+          "scene_ids": [
+            "scene-428735-e4864ab94dfd"
+          ],
+          "required": false,
+          "reason": "同片区可选来源场景；不便进入时直接删去。",
+          "stay_min": 5,
+          "stay_max": 15,
+          "stay_status": "editorial_suggestion",
+          "visit_mode": "public_exterior",
+          "skip_if": "封闭、活动占用、现场规则不允许停留或人流拥挤时跳过"
+        },
+        {
+          "location_id": "loc-tokyo-ikebukuro-station-front-park",
+          "scene_ids": [
+            "scene-2463-e03c34d796e2"
+          ],
+          "required": false,
+          "reason": "同片区可选来源场景；不便进入时直接删去。",
+          "stay_min": 5,
+          "stay_max": 15,
+          "stay_status": "editorial_suggestion",
+          "visit_mode": "public_exterior",
+          "skip_if": "封闭、活动占用、现场规则不允许停留或人流拥挤时跳过"
+        }
+      ],
+      "connections": [
+        {
+          "from_location_id": "loc-tokyo-ikebukuro-east-exit",
+          "to_location_id": "loc-tokyo-higashi-ikebukuro-central-park",
+          "status": "unverified",
+          "duration_min": null,
+          "distance_m": null,
+          "source_url": null,
+          "checked_at": null
+        },
+        {
+          "from_location_id": "loc-tokyo-higashi-ikebukuro-central-park",
+          "to_location_id": "loc-tokyo-higashi-ikebukuro-park",
+          "status": "unverified",
+          "duration_min": null,
+          "distance_m": null,
+          "source_url": null,
+          "checked_at": null
+        },
+        {
+          "from_location_id": "loc-tokyo-higashi-ikebukuro-park",
+          "to_location_id": "loc-tokyo-ikebukuro-station-front-park",
+          "status": "unverified",
+          "duration_min": null,
+          "distance_m": null,
+          "source_url": null,
+          "checked_at": null
+        }
+      ],
+      "walking_facts": [],
+      "publication": {
+        "content_ready": false,
+        "field_verified": false,
+        "user_validated": false,
+        "blockers": [
+          "画面、访问和步行连接尚未完成独立及现场核验"
+        ],
+        "allowed_use": "可保存和编辑个人原型草案；不宣称为已验收的推荐路线"
+      },
+      "deletion_policy": "删站后新相邻连接仍标为待核查；不得沿用总耗时。"
+    },
+    {
+      "id": "route-harajuku-yoyogi",
+      "title": "原宿・代代木：《Superstar!!》公园选点",
+      "anime_ids": [
+        "306742"
+      ],
+      "destination_id": "harajuku",
+      "version": 1,
+      "summary": "从原宿站外到代代木公园两个公共区域；活动会改变可走动线。",
+      "reason": "以已核对名称的公共地点组织手动可编辑草案；站间连接仍待核查。",
+      "start": "原宿站外公共街面",
+      "end": "代々木公園イベント広場",
+      "status": "prototype",
+      "reviewed_at": "2026-09-30",
+      "owner": "AnimeWay 项目维护者（现场核验负责人待定）",
+      "duration_hint": "总耗时未知；请根据当天活动、交通与休息安排调整。",
+      "duration_status": "unknown",
+      "unknowns": [
+        "来源场景未独立对照原作，具体机位未知。",
+        "站间连接和总耗时未现场核实。",
+        "开放、施工、拍摄规则需要出发前与现场复查。",
+        "尚无真实用户验证或实地试走记录。"
+      ],
+      "stops": [
+        {
+          "location_id": "loc-tokyo-harajuku-station-east",
+          "scene_ids": [
+            "scene-306742-3356e0af0aee"
+          ],
+          "required": true,
+          "reason": "路线起点，先确认公共入口与当天动线。",
+          "stay_min": 5,
+          "stay_max": 15,
+          "stay_status": "editorial_suggestion",
+          "visit_mode": "public_exterior",
+          "skip_if": "封闭、活动占用、现场规则不允许停留或人流拥挤时跳过"
+        },
+        {
+          "location_id": "loc-tokyo-yoyogi-keyaki",
+          "scene_ids": [
+            "scene-306742-23cb002542e7"
+          ],
+          "required": false,
+          "reason": "同片区可选来源场景；不便进入时直接删去。",
+          "stay_min": 5,
+          "stay_max": 15,
+          "stay_status": "editorial_suggestion",
+          "visit_mode": "public_exterior",
+          "skip_if": "封闭、活动占用、现场规则不允许停留或人流拥挤时跳过"
+        },
+        {
+          "location_id": "loc-tokyo-yoyogi-event-square",
+          "scene_ids": [
+            "scene-306742-14d331cf9690"
+          ],
+          "required": false,
+          "reason": "同片区可选来源场景；不便进入时直接删去。",
+          "stay_min": 5,
+          "stay_max": 15,
+          "stay_status": "editorial_suggestion",
+          "visit_mode": "public_exterior",
+          "skip_if": "封闭、活动占用、现场规则不允许停留或人流拥挤时跳过"
+        }
+      ],
+      "connections": [
+        {
+          "from_location_id": "loc-tokyo-harajuku-station-east",
+          "to_location_id": "loc-tokyo-yoyogi-keyaki",
+          "status": "unverified",
+          "duration_min": null,
+          "distance_m": null,
+          "source_url": null,
+          "checked_at": null
+        },
+        {
+          "from_location_id": "loc-tokyo-yoyogi-keyaki",
+          "to_location_id": "loc-tokyo-yoyogi-event-square",
+          "status": "unverified",
+          "duration_min": null,
+          "distance_m": null,
+          "source_url": null,
+          "checked_at": null
+        }
+      ],
+      "walking_facts": [],
+      "publication": {
+        "content_ready": false,
+        "field_verified": false,
+        "user_validated": false,
+        "blockers": [
+          "画面、访问和步行连接尚未完成独立及现场核验"
+        ],
+        "allowed_use": "可保存和编辑个人原型草案；不宣称为已验收的推荐路线"
+      },
+      "deletion_policy": "删站后新相邻连接仍标为待核查；不得沿用总耗时。"
     }
   ],
   "destinations": [
@@ -7134,6 +9861,63 @@
       ],
       "parent_id": "tokyo",
       "summary": "当前仅基础发现记录，尚无重点手册。"
+    },
+    {
+      "id": "odaiba",
+      "name": "台场・有明",
+      "aliases": [
+        "お台場",
+        "台場",
+        "有明",
+        "Odaiba"
+      ],
+      "parent_id": "tokyo",
+      "summary": "湾岸公园与公共步道；设施跨度较大，分片区规划。"
+    },
+    {
+      "id": "tsukishima",
+      "name": "佃・月岛・筑地",
+      "aliases": [
+        "佃",
+        "月島",
+        "月岛",
+        "築地",
+        "筑地"
+      ],
+      "parent_id": "tokyo",
+      "summary": "中央区公共街面与神社；跨片区移动需要另查连接。"
+    },
+    {
+      "id": "ikebukuro",
+      "name": "池袋",
+      "aliases": [
+        "池袋",
+        "Ikebukuro"
+      ],
+      "parent_id": "tokyo",
+      "summary": "车站及丰岛区公园；多作品共享现实地点。"
+    },
+    {
+      "id": "shibuya",
+      "name": "涩谷",
+      "aliases": [
+        "渋谷",
+        "Shibuya"
+      ],
+      "parent_id": "tokyo",
+      "summary": "站前广场；施工、人流和拍摄规则需现场复查。"
+    },
+    {
+      "id": "harajuku",
+      "name": "原宿・代代木公园",
+      "aliases": [
+        "原宿",
+        "代々木公園",
+        "代代木公园",
+        "Harajuku"
+      ],
+      "parent_id": "tokyo",
+      "summary": "原宿站外与代代木公园公共区域。"
     }
   ],
   "sources": [
@@ -7328,6 +10112,282 @@
       "allowed_usage": "原始来源跳转、带来源的简短事实摘要；图片不嵌入、不下载、不打包分享",
       "note": "新宿地区参照；不将场所地址判断提升为机位核验。",
       "attribution": "GO TOKYO 新宿指南"
+    },
+    {
+      "id": "odaiba-seaside",
+      "name": "东京临海公园运营方：台场海滨公园",
+      "url": "https://www.tptc.co.jp/park/01_02/point",
+      "source_url": "https://www.tptc.co.jp/park/01_02/point",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "东京临海公园运营方：台场海滨公园"
+    },
+    {
+      "id": "odaiba-promenade",
+      "name": "东京临海公园运营方：象征性步道公园",
+      "url": "https://www.tptc.co.jp/park/01_04/point",
+      "source_url": "https://www.tptc.co.jp/park/01_04/point",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "东京临海公园运营方：象征性步道公园"
+    },
+    {
+      "id": "odaiba-water",
+      "name": "东京临海公园运营方：水之广场公园",
+      "url": "https://www.tptc.co.jp/park/02_04",
+      "source_url": "https://www.tptc.co.jp/park/02_04",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "东京临海公园运营方：水之广场公园"
+    },
+    {
+      "id": "tsukuda-bridge",
+      "name": "中央区：佃小桥一带",
+      "url": "https://www.city.chuo.lg.jp/a0037/shisetsu/genre/sonota/sonota00060.html",
+      "source_url": "https://www.city.chuo.lg.jp/a0037/shisetsu/genre/sonota/sonota00060.html",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "中央区：佃小桥一带"
+    },
+    {
+      "id": "tsukishima-street",
+      "name": "中央区：月岛地区城市规划资料",
+      "url": "https://www.city.chuo.lg.jp/documents/5126/tukishima.pdf",
+      "source_url": "https://www.city.chuo.lg.jp/documents/5126/tukishima.pdf",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "中央区：月岛地区城市规划资料"
+    },
+    {
+      "id": "namiyoke-shrine",
+      "name": "波除神社官方网站",
+      "url": "https://www.namiyoke.or.jp/index.php",
+      "source_url": "https://www.namiyoke.or.jp/index.php",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "波除神社官方网站"
+    },
+    {
+      "id": "ikebukuro-station",
+      "name": "JR 东日本：池袋站",
+      "url": "https://www.jreast.co.jp/estation/station/info.aspx?StationCD=108",
+      "source_url": "https://www.jreast.co.jp/estation/station/info.aspx?StationCD=108",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "JR 东日本：池袋站"
+    },
+    {
+      "id": "higashi-ikebukuro-park",
+      "name": "丰岛区：东池袋公园",
+      "url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/023.html",
+      "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/023.html",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "丰岛区：东池袋公园"
+    },
+    {
+      "id": "higashi-central-park",
+      "name": "丰岛区：东池袋中央公园",
+      "url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/022.html",
+      "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/022.html",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "丰岛区：东池袋中央公园"
+    },
+    {
+      "id": "minami-second-park",
+      "name": "丰岛区：南池袋第二公园",
+      "url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/028.html",
+      "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/028.html",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "丰岛区：南池袋第二公园"
+    },
+    {
+      "id": "shibuya-square",
+      "name": "涩谷区：站前广场通称名",
+      "url": "https://www.city.shibuya.tokyo.jp/kankyo/doro-kasen/doro-jorei/kudo_tushomei.html",
+      "source_url": "https://www.city.shibuya.tokyo.jp/kankyo/doro-kasen/doro-jorei/kudo_tushomei.html",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "涩谷区：站前广场通称名"
+    },
+    {
+      "id": "shibuya-filming",
+      "name": "涩谷区：道路占用和拍摄说明",
+      "url": "https://www.city.shibuya.tokyo.jp/kankyo/doro-kasen/doro-shinsei/senyo.html",
+      "source_url": "https://www.city.shibuya.tokyo.jp/kankyo/doro-kasen/doro-shinsei/senyo.html",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "涩谷区：道路占用和拍摄说明"
+    },
+    {
+      "id": "minami-ikebukuro-park",
+      "name": "丰岛区：南池袋公园",
+      "url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/026.html",
+      "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/026.html",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "丰岛区：南池袋公园"
+    },
+    {
+      "id": "ikebukuro-west-park",
+      "name": "丰岛区：池袋西口公园",
+      "url": "https://www.city.toshima.lg.jp/340/miryoku/shiru/koen/nishiguchi.html",
+      "source_url": "https://www.city.toshima.lg.jp/340/miryoku/shiru/koen/nishiguchi.html",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "丰岛区：池袋西口公园"
+    },
+    {
+      "id": "ikebukuro-station-front-park",
+      "name": "丰岛区：池袋站前公园",
+      "url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/021.html",
+      "source_url": "https://www.city.toshima.lg.jp/340/shisetsu/koen/021.html",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "丰岛区：池袋站前公园"
+    },
+    {
+      "id": "yoyogi-park",
+      "name": "东京都公园协会：代代木公园设施",
+      "url": "https://www.tokyo-park.or.jp/park/yoyogi/facility/index.html",
+      "source_url": "https://www.tokyo-park.or.jp/park/yoyogi/facility/index.html",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "东京都公园协会：代代木公园设施"
+    },
+    {
+      "id": "harajuku-station",
+      "name": "JR 东日本：原宿站",
+      "url": "https://www.jreast.co.jp/estation/station/info.aspx?StationCd=1256",
+      "source_url": "https://www.jreast.co.jp/estation/station/info.aspx?StationCd=1256",
+      "checked_at": "2026-09-30",
+      "kind": "official_geography",
+      "license": "all-rights-reserved / no media reuse established",
+      "allowed_usage": "原始来源跳转、简短事实摘要；图片不嵌入、不下载、不打包分享",
+      "note": "核对地名或公共设施；不证明动画画面对照、准确机位或当日开放。",
+      "attribution": "JR 东日本：原宿站"
+    },
+    {
+      "id": "anitabi-296659",
+      "name": "Anitabi 作品点位 296659",
+      "url": "https://anitabi.cn/map?bangumiId=296659",
+      "source_url": "https://anitabi.cn/map?bangumiId=296659",
+      "checked_at": "2026-09-30",
+      "kind": "community_scene_index",
+      "license": "CC BY-NC-SA 4.0（数据条款见 Anitabi API 文档；单图权利另核验）",
+      "allowed_usage": "保留来源点位身份与链接；不复制图片",
+      "note": "场景关联为社区标注，未独立对照原作；来源快照为 2026-07-24。",
+      "attribution": "Anitabi 社区"
+    },
+    {
+      "id": "anitabi-387803",
+      "name": "Anitabi 作品点位 387803",
+      "url": "https://anitabi.cn/map?bangumiId=387803",
+      "source_url": "https://anitabi.cn/map?bangumiId=387803",
+      "checked_at": "2026-09-30",
+      "kind": "community_scene_index",
+      "license": "CC BY-NC-SA 4.0（数据条款见 Anitabi API 文档；单图权利另核验）",
+      "allowed_usage": "保留来源点位身份与链接；不复制图片",
+      "note": "场景关联为社区标注，未独立对照原作；来源快照为 2026-07-24。",
+      "attribution": "Anitabi 社区"
+    },
+    {
+      "id": "anitabi-428735",
+      "name": "Anitabi 作品点位 428735",
+      "url": "https://anitabi.cn/map?bangumiId=428735",
+      "source_url": "https://anitabi.cn/map?bangumiId=428735",
+      "checked_at": "2026-09-30",
+      "kind": "community_scene_index",
+      "license": "CC BY-NC-SA 4.0（数据条款见 Anitabi API 文档；单图权利另核验）",
+      "allowed_usage": "保留来源点位身份与链接；不复制图片",
+      "note": "场景关联为社区标注，未独立对照原作；来源快照为 2026-07-24。",
+      "attribution": "Anitabi 社区"
+    },
+    {
+      "id": "anitabi-369304",
+      "name": "Anitabi 作品点位 369304",
+      "url": "https://anitabi.cn/map?bangumiId=369304",
+      "source_url": "https://anitabi.cn/map?bangumiId=369304",
+      "checked_at": "2026-09-30",
+      "kind": "community_scene_index",
+      "license": "CC BY-NC-SA 4.0（数据条款见 Anitabi API 文档；单图权利另核验）",
+      "allowed_usage": "保留来源点位身份与链接；不复制图片",
+      "note": "场景关联为社区标注，未独立对照原作；来源快照为 2026-07-24。",
+      "attribution": "Anitabi 社区"
+    },
+    {
+      "id": "anitabi-2463",
+      "name": "Anitabi 作品点位 2463",
+      "url": "https://anitabi.cn/map?bangumiId=2463",
+      "source_url": "https://anitabi.cn/map?bangumiId=2463",
+      "checked_at": "2026-09-30",
+      "kind": "community_scene_index",
+      "license": "CC BY-NC-SA 4.0（数据条款见 Anitabi API 文档；单图权利另核验）",
+      "allowed_usage": "保留来源点位身份与链接；不复制图片",
+      "note": "场景关联为社区标注，未独立对照原作；来源快照为 2026-07-24。",
+      "attribution": "Anitabi 社区"
+    },
+    {
+      "id": "anitabi-306742",
+      "name": "Anitabi 作品点位 306742",
+      "url": "https://anitabi.cn/map?bangumiId=306742",
+      "source_url": "https://anitabi.cn/map?bangumiId=306742",
+      "checked_at": "2026-09-30",
+      "kind": "community_scene_index",
+      "license": "CC BY-NC-SA 4.0（数据条款见 Anitabi API 文档；单图权利另核验）",
+      "allowed_usage": "保留来源点位身份与链接；不复制图片",
+      "note": "场景关联为社区标注，未独立对照原作；来源快照为 2026-07-24。",
+      "attribution": "Anitabi 社区"
     }
   ],
   "publication_status": "one_desk_accepted_handbook_two_prototypes",

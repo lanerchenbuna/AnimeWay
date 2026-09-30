@@ -663,7 +663,7 @@ def render_personal_trips(store, token, catalog, api_key=""):
         st.subheader("已保存的行程")
         trips = _attempt(lambda: store.list_personal_trips(token)) if token else []
         if not trips:
-            st.info("还没有已保存的行程。可从两部试点作品开始，或从手册创建草案。")
+            st.info("还没有已保存的行程。可从东京精选作品选点，或从手册创建草案。")
         for trip in trips or []:
             with st.container(border=True):
                 st.write(trip["plan"]["requirements"]["title"])
